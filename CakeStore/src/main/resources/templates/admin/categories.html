@@ -11,21 +11,9 @@
 
     <div class="container-fluid mt-4">
         <div class="row">
-            <div class="col-md-3">
-                <div class="list-group">
-                    <a th:href="@{/admin/home}" class="list-group-item list-group-item-action">Dashboard</a>
-                    <a th:href="@{/admin/products}" class="list-group-item list-group-item-action">Quản lý Sản phẩm</a>
-                    <a th:href="@{/admin/categories}" class="list-group-item list-group-item-action active">Quản lý Danh mục</a>
-                    <a th:href="@{/admin/orders}" class="list-group-item list-group-item-action">Quản lý Đơn hàng</a>
-                    <a th:href="@{/admin/users}" class="list-group-item list-group-item-action">Quản lý User/Staff</a>
-                    <a th:href="@{/admin/coupons}" class="list-group-item list-group-item-action">Mã Giảm giá</a>
-                    <a th:href="@{/admin/inventory}" class="list-group-item list-group-item-action">Quản lý Nhập hàng</a>
-                    <a th:href="@{/admin/branches}" class="list-group-item list-group-item-action">Quản lý Chi nhánh</a>
-                    <a th:href="@{/admin/stats}" class="list-group-item list-group-item-action">Thống kê</a>
-                    <a th:href="@{/staff/chat}" class="list-group-item list-group-item-action">Chat với Khách hàng</a>
-                </div>
-            </div>
-
+            
+            <div th:replace="~{admin/home :: sidebar}"></div>
+            
             <div class="col-md-9">
                 <h2 class="mb-4">Quản lý Danh mục</h2>
 
@@ -57,7 +45,7 @@
                             <td th:text="${cat.id}">1</td>
                             <td th:text="${cat.name}">Bánh Kem</td>
                             <td th:text="${cat.slug}">banh-kem</td>
-                            <td th:text="${cat.parent != null ? cat.parent.name : 'ROOT'}">Bánh</td>
+                            <td th:text="${cat.parent != null ? cat.parent.name : 'ROOT'}">ROOT</td>
                             <td th:text="${cat.sortOrder}">10</td>
                             <td>
                                 <span th:if="${cat.isActive}" class="badge bg-success">Active</span>

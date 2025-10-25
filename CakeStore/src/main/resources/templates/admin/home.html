@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="list-group">
+                    <a th:href="@{/admin/home}" class="list-group-item list-group-item-action active">Dashboard</a>
+                    <a th:href="@{/admin/products}" class="list-group-item list-group-item-action">Quản lý Sản phẩm</a>
+                    <a th:href="@{/admin/orders}" class="list-group-item list-group-item-action">Quản lý Đơn hàng</a>
+                    <a th:href="@{/admin/users}" class="list-group-item list-group-item-action">Quản lý User/Staff</a>
+                    <a th:href="@{/admin/categories}" class="list-group-item list-group-item-action">Quản lý Danh mục</a>
+                    <a th:href="@{/admin/coupons}" class="list-group-item list-group-item-action">Mã Giảm giá</a>
+                    <a th:href="@{/admin/inventory}" class="list-group-item list-group-item-action">Quản lý Nhập hàng</a>
+                    <a th:href="@{/admin/branches}" class="list-group-item list-group-item-action">Quản lý Chi nhánh</a>
+                    <a th:href="@{/admin/stats}" class="list-group-item list-group-item-action">Thống kê</a>
+                    <a th:href="@{/staff/chat}" class="list-group-item list-group-item-action">Chat với Khách hàng</a>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <h2 class="mb-4">Admin Dashboard</h2>
+                <p>Chào mừng Admin. Tại đây bạn có thể theo dõi tổng quan hệ thống.</p>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card text-white bg-primary mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Doanh thu Hôm nay</h5>
+                                <p class="card-text">50,000,000 VND</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-warning mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Đơn hàng Mới</h5>
+                                <p class="card-text">15 đơn</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-success mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Tổng số Sản phẩm</h5>
+                                <p class="card-text">250 sản phẩm</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">Thống kê Đơn hàng 7 ngày qua</div>
+                    <div class="card-body">
+                        <p>Biểu đồ hiển thị tình trạng đơn hàng...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

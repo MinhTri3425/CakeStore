@@ -3,6 +3,9 @@ package com.cakestore.cakestore.service.impl;
 import com.cakestore.cakestore.entity.Category;
 import com.cakestore.cakestore.repository.CategoryRepository;
 import com.cakestore.cakestore.service.CategoryService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -63,5 +66,11 @@ public class CategoryServiceImpl implements CategoryService {
     // Hàm giả định tạo slug
     private String generateSlug(String name) {
         return name.toLowerCase().replaceAll("\\s+", "-").replaceAll("[^a-z0-9-]", "");
+    }
+
+    @Override
+    public Page<Category> search(String q, Boolean active, Pageable pageable) {
+        String query = (q == null || q.isBlank()) ? null : q.trim();
+        return categoryRepository.search(query, active, pageable);
     }
 }

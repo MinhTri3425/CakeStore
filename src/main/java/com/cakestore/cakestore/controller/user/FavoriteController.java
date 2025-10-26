@@ -1,10 +1,11 @@
 // controller/FavoriteController.java
-package com.cakestore.cakestore.controller;
+package com.cakestore.cakestore.controller.user;
 
-import com.cakestore.cakestore.service.FavoriteSessionService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import com.cakestore.cakestore.service.user.FavoriteSessionService;
 
 @Controller
 @RequestMapping("/fav")

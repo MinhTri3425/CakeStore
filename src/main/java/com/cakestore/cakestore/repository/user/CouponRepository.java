@@ -1,5 +1,5 @@
 // repository/CouponRepository.java
-package com.cakestore.cakestore.repository;
+package com.cakestore.cakestore.repository.user;
 
 import com.cakestore.cakestore.entity.Coupon;
 import org.springframework.data.jpa.repository.JpaRepository;

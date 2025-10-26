@@ -1,8 +1,9 @@
 // service/CouponService.java
-package com.cakestore.cakestore.service;
+package com.cakestore.cakestore.service.user;
 
 import com.cakestore.cakestore.entity.Coupon;
-import com.cakestore.cakestore.repository.CouponRepository;
+import com.cakestore.cakestore.repository.user.CouponRepository;
+
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

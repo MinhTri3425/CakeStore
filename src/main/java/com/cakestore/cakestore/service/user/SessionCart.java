@@ -1,4 +1,4 @@
-package com.cakestore.cakestore.service;
+package com.cakestore.cakestore.service.user;
 
 import java.math.BigDecimal;
 import java.util.*;

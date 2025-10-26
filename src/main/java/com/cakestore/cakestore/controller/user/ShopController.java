@@ -1,9 +1,10 @@
-package com.cakestore.cakestore.controller;
+package com.cakestore.cakestore.controller.user;
 
-import com.cakestore.cakestore.repository.BannerRepository; // <--- thêm
-import com.cakestore.cakestore.repository.CategoryRepository;
-import com.cakestore.cakestore.repository.ProductRepository;
-import com.cakestore.cakestore.service.ProductQueryService;
+import com.cakestore.cakestore.repository.user.BannerRepository;
+import com.cakestore.cakestore.repository.user.CategoryRepository;
+import com.cakestore.cakestore.repository.user.ProductRepository;
+import com.cakestore.cakestore.service.user.ProductQueryService;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;

@@ -1,4 +1,4 @@
-package com.cakestore.cakestore.dto;
+package com.cakestore.cakestore.dto.user;
 
 import java.math.BigDecimal;
 import java.util.List;

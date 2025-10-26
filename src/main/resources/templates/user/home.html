@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="fragments/header :: layout(~{::body})">
 <body>
@@ -6,11 +5,15 @@
 <!-- BANNERS -->
 <div th:if="${banners != null and #lists.size(banners) > 0}" id="banner" class="carousel slide mb-4" data-bs-ride="carousel">
   <div class="carousel-inner">
-    <div class="carousel-item" th:each="b,iter : ${banners}" th:classappend="${iter.index==0}? 'active'">
-      <a th:if="${b.linkTo}" th:href="${b.linkTo}">
+    <div class="carousel-item"
+         th:each="b,iter : ${banners}"
+         th:classappend="${iter.index == 0} ? ' active' : ''">
+      <a th:if="${b.linkTo != null and !#strings.isEmpty(b.linkTo)}" th:href="${b.linkTo}">
         <img class="d-block w-100 rounded" th:src="${b.imageUrl}" th:alt="${b.title}">
       </a>
-      <img th:if="${!b.linkTo}" class="d-block w-100 rounded" th:src="${b.imageUrl}" th:alt="${b.title}">
+      <img th:if="${b.linkTo == null or #strings.isEmpty(b.linkTo)}"
+           class="d-block w-100 rounded"
+           th:src="${b.imageUrl}" th:alt="${b.title}">
     </div>
   </div>
 </div>
@@ -20,19 +23,25 @@
 <div class="row row-cols-2 row-cols-md-4 g-3">
   <div class="col" th:each="p : ${topSelling}">
     <div class="card h-100">
+      <!-- thumbnail / placeholder -->
       <img th:if="${p.thumbnailUrl != null}" th:src="${p.thumbnailUrl}" class="card-img-top" alt="">
+      <img th:if="${p.thumbnailUrl == null}" th:src="@{/images/no-image.png}" class="card-img-top" alt="no image">
+
       <div class="card-body">
         <h6 class="card-title text-truncate" th:text="${p.name}">Tên bánh</h6>
         <div class="price" th:text="${#numbers.formatDecimal(p.price,1,0)} + ' đ'">0 đ</div>
       </div>
+
       <div class="card-footer d-flex gap-2">
         <!-- ♥ -->
         <form th:action="@{/fav/toggle}" method="post">
           <input type="hidden" name="productId" th:value="${p.id}">
           <button class="btn btn-sm"
-                  th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? 'btn-danger' : 'btn-outline-danger'">♥</button>
+                  th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? ' btn-danger' : ' btn-outline-danger'">♥</button>
         </form>
+
         <a th:href="@{'/product/' + ${p.id}}" class="btn btn-sm btn-outline-secondary w-50">Chi tiết</a>
+
         <form th:action="@{/cart/add}" method="post" class="w-50">
           <input type="hidden" name="productId" th:value="${p.id}">
           <button class="btn btn-sm btn-primary w-100">Thêm giỏ</button>
@@ -47,7 +56,9 @@
 <!-- DANH MỤC -->
 <h5>Danh mục</h5>
 <div class="d-flex flex-wrap gap-2">
-  <a class="btn btn-outline-dark btn-sm" th:each="c: ${categories}" th:text="${c.name}"
+  <a class="btn btn-outline-dark btn-sm"
+     th:each="c: ${categories}"
+     th:text="${c.name}"
      th:href="@{'/category/' + ${c.slug}}">Danh mục</a>
 </div>
 
@@ -59,15 +70,18 @@
     <div class="col" th:each="rp : ${recently}">
       <div class="card h-100">
         <img th:if="${rp.images != null and #lists.size(rp.images) > 0}" th:src="${rp.images[0].url}" class="card-img-top" alt="">
+        <img th:if="${rp.images == null or #lists.size(rp.images) == 0}" th:src="@{/images/no-image.png}" class="card-img-top" alt="no image">
+
         <div class="card-body">
           <h6 class="card-title text-truncate" th:text="${rp.name}">Tên bánh</h6>
           <div class="price" th:text="${#numbers.formatDecimal(rp.price,1,0)} + ' đ'">0 đ</div>
         </div>
+
         <div class="card-footer d-flex gap-2">
           <form th:action="@{/fav/toggle}" method="post">
             <input type="hidden" name="productId" th:value="${rp.id}">
             <button class="btn btn-sm"
-                    th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, rp.id)} ? 'btn-danger' : 'btn-outline-danger'">♥</button>
+                    th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, rp.id)} ? ' btn-danger' : ' btn-outline-danger'">♥</button>
           </form>
           <a th:href="@{'/product/' + ${rp.id}}" class="btn btn-sm btn-outline-secondary w-100">Xem lại</a>
         </div>

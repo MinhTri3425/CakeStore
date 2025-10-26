@@ -1,4 +1,4 @@
-package com.cakestore.cakestore.repository;
+package com.cakestore.cakestore.repository.user;
 
 import com.cakestore.cakestore.entity.ProductStats;
 import org.springframework.data.jpa.repository.JpaRepository;

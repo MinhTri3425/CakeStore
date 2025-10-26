@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="fragments/header :: layout(~{::body})">
 <body>
@@ -20,9 +19,7 @@
       <form th:action="@{/fav/toggle}" method="post">
         <input type="hidden" name="productId" th:value="${p.id}">
         <button class="btn"
-                th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? 'btn-danger' : 'btn-outline-danger'">
-          ♥
-        </button>
+                th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? 'btn-danger' : 'btn-outline-danger'">♥</button>
       </form>
     </div>
 

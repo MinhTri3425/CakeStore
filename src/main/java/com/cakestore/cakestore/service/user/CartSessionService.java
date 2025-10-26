@@ -1,4 +1,4 @@
-package com.cakestore.cakestore.service;
+package com.cakestore.cakestore.service.user;
 
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;

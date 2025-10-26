@@ -17,12 +17,13 @@
   <description>Demo project for Spring Boot</description>
 
   <properties>
-    <!-- JDK: cân nhắc 23 nếu JDK 24 gặp vấn đề -->
+    <!-- Nếu JDK 24 cà khịa, đổi 23 cho chắc -->
     <java.version>24</java.version>
 
-    <!-- Phiên bản lib ngoài BOM của Spring Boot -->
     <jjwt.version>0.11.5</jjwt.version>
-    <cloudinary.version>1.36.0</cloudinary.version>
+    <!-- bump nhẹ cho ổn định -->
+    <cloudinary.version>1.38.0</cloudinary.version>
+    <httpclient.version>4.5.14</httpclient.version>
   </properties>
 
   <dependencies>
@@ -62,9 +63,7 @@
       <artifactId>thymeleaf-extras-springsecurity6</artifactId>
     </dependency>
 
-    <!-- ===== BỔ SUNG QUAN TRỌNG CHO DỰ ÁN ===== -->
-
-    <!-- JWT (jjwt) -->
+    <!-- JWT -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
@@ -83,17 +82,36 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- BCrypt nếu bạn muốn dùng crypto mà không cần cả security stack ở chỗ khác -->
+    <!-- Crypto nhẹ -->
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-crypto</artifactId>
     </dependency>
 
-    <!-- Cloudinary upload ảnh/video review -->
+    <!-- Cloudinary (loại commons-logging) -->
     <dependency>
       <groupId>com.cloudinary</groupId>
       <artifactId>cloudinary-http44</artifactId>
       <version>${cloudinary.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- HttpClient tách riêng (cũng loại commons-logging) -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>${httpclient.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Devtools -->
@@ -116,7 +134,7 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- Config processor -->
+    <!-- Config processor (annotation processor) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-configuration-processor</artifactId>

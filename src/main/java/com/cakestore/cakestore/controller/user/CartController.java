@@ -1,9 +1,10 @@
-package com.cakestore.cakestore.controller;
+package com.cakestore.cakestore.controller.user;
 
-import com.cakestore.cakestore.repository.ProductRepository;
-import com.cakestore.cakestore.service.CartSessionService;
-import com.cakestore.cakestore.service.SessionCart;
-import com.cakestore.cakestore.service.CouponService;
+import com.cakestore.cakestore.repository.user.ProductRepository;
+import com.cakestore.cakestore.service.user.CartSessionService;
+import com.cakestore.cakestore.service.user.CouponService;
+import com.cakestore.cakestore.service.user.SessionCart;
+
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

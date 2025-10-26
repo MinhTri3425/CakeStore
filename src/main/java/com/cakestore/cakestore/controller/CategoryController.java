@@ -87,8 +87,12 @@ public class CategoryController {
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
-        categoryService.deleteById(id);
-        ra.addFlashAttribute("success", "Xoá danh mục thành công!");
+        try {
+            categoryService.deleteById(id);
+            ra.addFlashAttribute("success", "Xoá danh mục thành công!");
+        } catch (IllegalStateException ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+        }
         return "redirect:/admin/categories";
     }
 }

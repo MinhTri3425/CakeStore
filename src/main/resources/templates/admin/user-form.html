@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${isEdit ? 'Chỉnh sửa Tài khoản' : 'Thêm Tài khoản Mới'}"></title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h2 th:text="${isEdit ? 'Chỉnh sửa Tài khoản: ' + user.email : 'Thêm Tài khoản Mới'}" class="mb-4"></h2>
+                
+                <form th:action="@{/admin/users}" th:object="${user}" method="post">
+                    <input type="hidden" th:field="*{id}" th:if="${isEdit}" />
+
+                    <div class="mb-3">
+                        <label for="fullName" class="form-label">Tên đầy đủ</label>
+                        <input type="text" th:field="*{fullName}" class="form-control" id="fullName" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" th:field="*{email}" class="form-control" id="email" th:disabled="${isEdit}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Số điện thoại</label>
+                        <input type="tel" th:field="*{phone}" class="form-control" id="phone">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="rawPassword" class="form-label" th:text="${isEdit ? 'Mật khẩu (Để trống nếu không đổi)' : 'Mật khẩu'}">Mật khẩu</label>
+                        <input type="password" name="rawPassword" class="form-control" id="rawPassword" th:required="${!isEdit}">
+                    </div>
+
+                    <div class="mb-3" th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                        <label for="role" class="form-label">Vai trò (Role)</label>
+                        <select th:field="*{role}" class="form-select" id="role">
+                            <option th:each="role : ${availableRoles}" 
+                                    th:value="${role}" 
+                                    th:text="${role}">customer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" th:field="*{isActive}" class="form-check-input" id="isActive">
+                        <label class="form-check-label" for="isActive">Kích hoạt (Is Active)</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" th:text="${isEdit ? 'Cập nhật Tài khoản' : 'Thêm Tài khoản'}"></button>
+                    <a th:href="@{/admin/users}" class="btn btn-secondary">Hủy</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

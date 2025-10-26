@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Danh mục</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            
+            <div th:replace="~{admin/home :: sidebar}"></div>
+            
+            <div class="col-md-9">
+                <h2 class="mb-4">Quản lý Danh mục</h2>
+
+                <div th:if="${success}" class="alert alert-success" role="alert">
+                    <span th:text="${success}"></span>
+                </div>
+                <div th:if="${error}" class="alert alert-danger" role="alert">
+                    <span th:text="${error}"></span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a th:href="@{/admin/categories/new}" class="btn btn-primary">Thêm Danh mục Mới</a>
+                </div>
+
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên Danh mục</th>
+                            <th>Slug</th>
+                            <th>Danh mục Cha</th>
+                            <th>Thứ tự</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cat : ${categories}">
+                            <td th:text="${cat.id}">1</td>
+                            <td th:text="${cat.name}">Bánh Kem</td>
+                            <td th:text="${cat.slug}">banh-kem</td>
+                            <td th:text="${cat.parent != null ? cat.parent.name : 'ROOT'}">ROOT</td>
+                            <td th:text="${cat.sortOrder}">10</td>
+                            <td>
+                                <span th:if="${cat.isActive}" class="badge bg-success">Active</span>
+                                <span th:unless="${cat.isActive}" class="badge bg-danger">Disabled</span>
+                            </td>
+                            <td>
+                                <a th:href="@{/admin/categories/{id}/edit(id=${cat.id})}" class="btn btn-sm btn-info">Sửa</a>
+                                <form th:action="@{/admin/categories/{id}/delete(id=${cat.id})}" method="post" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục này?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div th:if="${#lists.isEmpty(categories)}" class="alert alert-info">
+                    Không có danh mục nào được tìm thấy.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

@@ -1,69 +1,151 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Quản lý Mã Giảm giá</title>
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
-    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  <meta charset="UTF-8">
+  <title>Quản lý Mã Giảm giá</title>
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 <body>
-    <div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/header :: header}"></div>
 
-    <div class="container-fluid mt-4">
-        <div class="row">
-            <div th:replace="~{admin/home :: sidebar}"></div>
-            
-            <div class="col-md-9">
-                <h2 class="mb-4">Quản lý Mã Giảm giá (Coupons)</h2>
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div th:replace="~{admin/home :: sidebar}"></div>
 
-                <div th:if="${success}" class="alert alert-success" role="alert"><span th:text="${success}"></span></div>
-                <div th:if="${error}" class="alert alert-danger" role="alert"><span th:text="${error}"></span></div>
+    <div class="col-md-9">
+      <h2 class="mb-3">Quản lý Mã Giảm giá</h2>
 
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4>Danh sách Coupons</h4>
-                    <a th:href="@{/admin/coupons/new}" class="btn btn-primary">Tạo Mã Giảm giá Mới</a>
-                </div>
+      <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+      <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Code</th>
-                            <th>Loại</th>
-                            <th>Giá trị</th>
-                            <th>SL còn</th>
-                            <th>Áp dụng tại</th>
-                            <th>Hiệu lực</th>
-                            <th>Trạng thái</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="coupon : ${coupons}">
-                            <td th:text="${coupon.code}">SALE20</td>
-                            <td th:text="${coupon.type}">PERCENT</td>
-                            <td th:text="${#numbers.formatDecimal(coupon.value, 0, 'POINT', 0, 'POINT')}">20</td>
-                            <td th:text="${coupon.quantity}">100</td>
-                            <td th:text="${coupon.branch != null ? coupon.branch.code : 'TOÀN HỆ THỐNG'}">HCM-Q1</td>
-                            <td th:text="${#temporals.format(coupon.startsAt, 'dd-MM')} + ' - ' + ${#temporals.format(coupon.endsAt, 'dd-MM')}">01-01 - 31-01</td>
-                            <td>
-                                <span th:if="${coupon.isActiveNow(#dates.createNow())}" class="badge bg-success">Đang hoạt động</span>
-                                <span th:unless="${coupon.isActiveNow(#dates.createNow())}" class="badge bg-secondary">Ngừng/Hết hạn</span>
-                            </td>
-                            <td>
-                                <a th:href="@{/admin/coupons/{id}/edit(id=${coupon.id})}" class="btn btn-sm btn-info">Sửa</a>
-                                <form th:action="@{/admin/coupons/{id}/delete(id=${coupon.id})}" method="post" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa mã giảm giá này?');">
-                                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div th:if="${#lists.isEmpty(coupons)}" class="alert alert-info">Chưa có mã giảm giá nào được tạo.</div>
-            </div>
+      <!-- Filter/Search -->
+      <form class="row g-2 align-items-end mb-3" method="get" th:action="@{/admin/coupons}">
+        <div class="col-md-3">
+          <label class="form-label">Tìm theo Code</label>
+          <input type="search" class="form-control" name="q" th:value="${q}" placeholder="VD: SALE20">
         </div>
-    </div>
+        <div class="col-md-2">
+          <label class="form-label">Loại</label>
+          <select name="type" class="form-select">
+            <option th:value="${null}" th:selected="${type == null}">Tất cả</option>
+            <option th:each="t : ${couponTypes}" th:value="${t}" th:text="${t}" th:selected="${type==t}"></option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Trạng thái</label>
+          <select name="status" class="form-select">
+            <option value="all" th:selected="${status=='all'}">Tất cả</option>
+            <option value="active" th:selected="${status=='active'}">Active</option>
+            <option value="inactive" th:selected="${status=='inactive'}">Inactive</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Chi nhánh</label>
+          <select name="branchId" class="form-select">
+            <option th:value="${null}" th:selected="${branchId == null}">Toàn hệ thống</option>
+            <option th:each="b : ${branches}" th:value="${b.id}"
+                    th:text="${b.code + ' - ' + b.name}"
+                    th:selected="${branchId != null and branchId == b.id}"></option>
+          </select>
+        </div>
+        <div class="col-md-2 text-end">
+          <a th:href="@{/admin/coupons/new}" class="btn btn-primary">Tạo mới</a>
+          <button class="btn btn-outline-secondary" type="submit">Lọc</button>
+        </div>
 
-    <div th:replace="~{fragments/footer :: footer}"></div>
-    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+        <!-- giữ sort/dir -->
+        <input type="hidden" name="sort" th:value="${sort}">
+        <input type="hidden" name="dir" th:value="${dir}">
+      </form>
+
+      <table class="table table-bordered table-striped align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th><a class="link-light text-decoration-none"
+                   th:href="@{/admin/coupons(q=${q},type=${type},status=${status},branchId=${branchId},page=${page},size=${size},sort='code',dir=${dir})}">Code</a></th>
+            <th>Loại</th>
+            <th><a class="link-light text-decoration-none"
+                   th:href="@{/admin/coupons(q=${q},type=${type},status=${status},branchId=${branchId},page=${page},size=${size},sort='value',dir=${dir})}">Giá trị</a></th>
+            <th>Min Subtotal</th>
+            <th>Max Discount</th>
+            <th>SL còn</th>
+            <th>Chi nhánh</th>
+            <th>Hiệu lực</th>
+            <th>TT</th>
+            <th style="width:160px">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="c : ${coupons}">
+            <td th:text="${c.code}">SALE20</td>
+            <td th:text="${c.type}">PERCENT</td>
+            <td th:text="${#numbers.formatDecimal(c.value, 0, 'POINT', 0, 'POINT')}">20</td>
+            <td th:text="${c.minSubtotal}">0</td>
+            <td th:text="${c.maxDiscount}">0</td>
+            <td th:text="${c.quantity}">100</td>
+            <td th:text="${c.branch != null ? c.branch.code : 'ALL'}">ALL</td>
+            <td th:text="${#temporals.format(c.startsAt,'dd/MM/yyyy HH:mm') + ' → ' + #temporals.format(c.endsAt,'dd/MM/yyyy HH:mm')}">...</td>
+            <td>
+              <span th:if="${c.active}" class="badge bg-success">Active</span>
+              <span th:unless="${c.active}" class="badge bg-secondary">Inactive</span>
+            </td>
+            <td>
+              <a th:href="@{/admin/coupons/{id}/edit(id=${c.id})}" class="btn btn-sm btn-info">Sửa</a>
+              <form th:action="@{/admin/coupons/{id}/delete(id=${c.id})}"
+                    method="post" style="display:inline"
+                    onsubmit="return confirm('Xoá mã này?')">
+                <button class="btn btn-sm btn-danger" type="submit">Xoá</button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div th:if="${#lists.isEmpty(coupons)}" class="alert alert-info">Không có dữ liệu.</div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="small">
+          Trang <span th:text="${pageData.number+1}"></span> / <span th:text="${pageData.totalPages==0?1:pageData.totalPages}"></span>,
+          Tổng <span th:text="${pageData.totalElements}"></span> mã
+        </div>
+        <nav th:if="${pageData.totalPages>1}">
+          <ul class="pagination mb-0">
+            <li class="page-item" th:classappend="${pageData.first} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/admin/coupons(q=${q},type=${type},status=${status},branchId=${branchId},size=${size},sort=${sort},dir=${dir},page=${0})}">«</a>
+            </li>
+            <li class="page-item" th:classappend="${pageData.first} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/admin/coupons(q=${q},type=${type},status=${status},branchId=${branchId},size=${size},sort=${sort},dir=${dir},page=${pageData.number-1})}">‹</a>
+            </li>
+
+            <li class="page-item"
+                th:each="p : ${#numbers.sequence(T(java.lang.Math).max(0, pageData.number-2), T(java.lang.Math).min(pageData.totalPages-1, pageData.number+2))}"
+                th:classappend="${p == pageData.number} ? 'active'">
+              <a class="page-link"
+                 th:text="${p+1}"
+                 th:href="@{/admin/coupons(q=${q},type=${type},status=${status},branchId=${branchId},size=${size},sort=${sort},dir=${dir},page=${p})}">1</a>
+            </li>
+
+            <li class="page-item" th:classappend="${pageData.last} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/admin/coupons(q=${q},type=${type},status=${status},branchId=${branchId},size=${size},sort=${sort},dir=${dir},page=${pageData.number+1})}">›</a>
+            </li>
+            <li class="page-item" th:classappend="${pageData.last} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/admin/coupons(q=${q},type=${type},status=${status},branchId=${branchId},size=${size},sort=${sort},dir=${dir},page=${pageData.totalPages-1})}">»</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>

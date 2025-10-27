@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+<meta charset="UTF-8">
+<title
+	th:text="${isEdit ? 'Chỉnh sửa Tài khoản' : 'Thêm Tài khoản Mới'}"></title>
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+<link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+	<div th:replace="~{fragments/header :: header}"></div>
+
+	<div class="container mt-4">
+		<div class="row justify-content-center">
+			<div class="col-md-8">
+				<h2
+					th:text="${isEdit ? 'Chỉnh sửa: ' + user.email : 'Thêm Tài khoản Mới'}"
+					class="mb-4"></h2>
+
+				<form th:action="@{/admin/users}" th:object="${user}" method="post">
+					<input type="hidden" th:if="${isEdit}" th:field="*{id}" />
+
+					<div class="mb-3">
+						<label class="form-label">Tên đầy đủ</label> <input type="text"
+							th:field="*{fullName}" class="form-control" required>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Email</label> <input type="email"
+							th:field="*{email}" class="form-control" th:readonly="${isEdit}"
+							required>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Số điện thoại</label> <input type="tel"
+							th:field="*{phone}" class="form-control">
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label"
+							th:text="${isEdit ? 'Mật khẩu (để trống nếu không đổi)' : 'Mật khẩu'}"></label>
+						<input type="password" name="rawPassword" class="form-control"
+							th:required="${!isEdit}">
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Vai trò (Role)</label> <select
+							th:field="*{role}" class="form-select">
+							<option th:each="r : ${availableRoles}" th:value="${r}"
+								th:text="${r}">customer</option>
+						</select>
+					</div>
+
+					<div class="mb-3 form-check">
+						<!-- DÙNG *{active} -->
+						<input type="checkbox" th:field="*{active}"
+							class="form-check-input" id="isActive"> <label
+							class="form-check-label" for="isActive">Kích hoạt</label>
+					</div>
+
+					<button type="submit" class="btn btn-primary"
+						th:text="${isEdit ? 'Cập nhật' : 'Thêm mới'}"></button>
+					<a th:href="@{/admin/users}" class="btn btn-secondary">Hủy</a>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div th:replace="~{fragments/footer :: footer}"></div>
+	<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

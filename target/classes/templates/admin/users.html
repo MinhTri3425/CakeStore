@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý User & Staff</title>
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+<link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+	<div th:replace="~{fragments/header :: header}"></div>
+
+	<div class="container-fluid mt-4">
+		<div class="row">
+			<div th:replace="~{admin/home :: sidebar}"></div>
+			<div class="col-md-9">
+				<h2 class="mb-4">Quản lý Tài khoản (User & Staff)</h2>
+
+				<div th:if="${success}" class="alert alert-success" role="alert">
+					<span th:text="${success}"></span>
+				</div>
+				<div th:if="${error}" class="alert alert-danger" role="alert">
+					<span th:text="${error}"></span>
+				</div>
+
+				<!-- FORM TÌM KIẾM + LỌC TRẠNG THÁI -->
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<form th:action="@{/admin/users}" method="get"
+						class="d-flex align-items-center gap-2">
+						<input type="search" name="keyword" th:value="${keyword}"
+							class="form-control" placeholder="Tìm kiếm ...">
+
+						<!-- Bộ lọc trạng thái -->
+						<select name="status" class="form-select">
+							<option th:value="all" th:selected="${status == 'all'}">Tất
+								cả</option>
+							<option th:value="active" th:selected="${status == 'active'}">Active</option>
+							<option th:value="inactive" th:selected="${status == 'inactive'}">Inactive</option>
+						</select>
+
+						<button type="submit"
+							class="btn btn-info h-100 w-auto px-3 fw-semibold text-nowrap d-flex align-items-center justify-content-center">Tìm kiếm</button>
+
+
+					</form>
+
+					<a th:href="@{/admin/users/new}" class="btn btn-primary"> Thêm
+						Tài khoản Mới </a>
+				</div>
+
+				<table class="table table-bordered table-striped">
+					<thead class="table-dark">
+						<tr>
+							<th>ID</th>
+							<th>Email</th>
+							<th>Tên đầy đủ</th>
+							<th>Role</th>
+							<th>Trạng thái</th>
+							<th>Thao tác</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="user : ${users}">
+							<td th:text="${user.id}">1</td>
+							<td th:text="${user.email}">user@example.com</td>
+							<td th:text="${user.fullName}">User Name</td>
+							<td><span class="badge"
+								th:classappend="${user.role == 'admin' ? 'bg-danger' : (user.role == 'staff' ? 'bg-warning text-dark' : 'bg-primary')}"
+								th:text="${user.role}">customer</span></td>
+							<td><span th:if="${user.active}" class="badge bg-success">Active</span>
+								<span th:unless="${user.active}" class="badge bg-secondary">Inactive</span>
+							</td>
+							<td><a th:href="@{/admin/users/{id}/edit(id=${user.id})}"
+								class="btn btn-sm btn-info">Sửa</a>
+								<form th:action="@{/admin/users/{id}/toggle(id=${user.id})}"
+									method="post" style="display: inline;"
+									onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái của tài khoản này?');">
+									<button type="submit" class="btn btn-sm"
+										th:classappend="${user.active ? 'btn-secondary' : 'btn-success'}"
+										th:text="${user.active ? 'Disable' : 'Enable'}">Disable</button>
+								</form></td>
+						</tr>
+					</tbody>
+				</table>
+
+				<div th:if="${userPage.empty}" class="alert alert-info">Không
+					có tài khoản nào được tìm thấy.</div>
+
+				<!-- PHÂN TRANG (giữ tham số status) -->
+				<nav th:if="${totalPages > 1}" aria-label="Page navigation">
+					<ul class="pagination">
+						<li class="page-item"
+							th:classappend="${currentPage == 0} ? ' disabled'"><a
+							class="page-link"
+							th:href="@{|/admin/users?page=${currentPage-1}&keyword=${keyword}&status=${status}|}">«</a>
+						</li>
+
+						<li class="page-item"
+							th:each="i : ${#numbers.sequence(0, totalPages-1)}"
+							th:classappend="${i == currentPage} ? ' active'"><a
+							class="page-link" th:text="${i + 1}"
+							th:href="@{|/admin/users?page=${i}&keyword=${keyword}&status=${status}|}">1</a>
+						</li>
+
+						<li class="page-item"
+							th:classappend="${currentPage + 1 >= totalPages} ? ' disabled'">
+							<a class="page-link"
+							th:href="@{|/admin/users?page=${currentPage+1}&keyword=${keyword}&status=${status}|}">»</a>
+						</li>
+					</ul>
+				</nav>
+
+			</div>
+		</div>
+	</div>
+
+	<div th:replace="~{fragments/footer :: footer}"></div>
+	<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

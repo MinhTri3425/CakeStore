@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+	private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -21,15 +21,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<User> findUsers(String keyword, Pageable pageable) {
-        // Cần viết custom query trong UserRepository để search theo email/fullname
-        return userRepository.findAll(pageable); // Tạm thời dùng findAll
+    public Page<User> findUsers(String keyword, Boolean status, Pageable pageable) {
+        String kw = keyword == null ? "" : keyword.trim();
+        return userRepository.searchAllWithStatus(kw, status, pageable);
     }
-    
+
     @Override
-    public Page<User> findUsersByRole(String role, String keyword, Pageable pageable) {
-        // TODO: Cần viết custom query trong UserRepository để search theo Role và keyword
-        return userRepository.findAll(pageable); // Tạm thời dùng findAll
+    public Page<User> findUsersByRole(String role, String keyword, Boolean status, Pageable pageable) {
+        String kw = keyword == null ? "" : keyword.trim();
+        return userRepository.searchByRoleWithStatus(role, kw, status, pageable);
     }
 
     @Override
@@ -40,34 +40,38 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User save(User user, String rawPassword) {
-        // Chỉ mã hóa nếu là tạo mới hoặc có nhập mật khẩu mới
-        if (user.getId() == null || (rawPassword != null && !rawPassword.isEmpty())) {
+        if (user.getId() == null) {
+            if (rawPassword == null || rawPassword.isBlank()) {
+                throw new IllegalArgumentException("Mật khẩu không được để trống khi tạo mới.");
+            }
             user.setPasswordHash(passwordEncoder.encode(rawPassword));
-        } else if (user.getId() != null) {
-            // Đảm bảo không ghi đè passwordHash nếu không có rawPassword (tránh mất hash)
-            User existingUser = userRepository.findById(user.getId()).orElse(null);
-            if (existingUser != null) {
-                user.setPasswordHash(existingUser.getPasswordHash());
+            if (!user.isActive()) user.setActive(true); // tạo mới mặc định Active
+        } else {
+            if (rawPassword != null && !rawPassword.isBlank()) {
+                user.setPasswordHash(passwordEncoder.encode(rawPassword));
+            } else {
+                User existed = userRepository.findById(user.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Tài khoản không tồn tại."));
+                user.setPasswordHash(existed.getPasswordHash());
             }
         }
-        // UpdatedAt được DB quản lý
         return userRepository.save(user);
     }
-    
+
     @Override
     @Transactional
     public void updateActiveStatus(Long id, boolean isActive) {
-        userRepository.findById(id).ifPresent(user -> {
-            user.setActive(isActive);
-            // UpdatedAt được DB quản lý
-            userRepository.save(user);
+        userRepository.findById(id).ifPresent(u -> {
+            u.setActive(isActive);
+            userRepository.save(u);
         });
     }
 
     @Override
+    @Transactional
     public void deleteById(Long id) {
-        // Thường chỉ set isActive=false
-        userRepository.deleteById(id);
+        // Soft delete
+        updateActiveStatus(id, false);
     }
 
     @Override

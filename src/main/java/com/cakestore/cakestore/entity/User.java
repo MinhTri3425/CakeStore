@@ -26,7 +26,7 @@ public class User {
     @Column(name = "PasswordHash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "FullName", nullable = false, length = 120)
+    @Column(name = "FullName", nullable = false, columnDefinition = "NVARCHAR(150)")
     private String fullName;
 
     /** customer/admin/shipper — ràng buộc bằng CHECK ở DB */

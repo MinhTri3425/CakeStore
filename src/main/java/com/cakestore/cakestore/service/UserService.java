@@ -6,21 +6,18 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface UserService {
-    // Tìm kiếm phân trang tất cả User (Customer, Staff, Admin)
-    Page<User> findUsers(String keyword, Pageable pageable);
-    
-    // Tìm kiếm User theo Role (Chỉ dùng cho Staff/Admin)
-    Page<User> findUsersByRole(String role, String keyword, Pageable pageable);
+	Page<User> findUsers(String keyword, Boolean status, Pageable pageable);
+    Page<User> findUsersByRole(String role, String keyword, Boolean status, Pageable pageable);
 
     User findById(Long id);
-    
-    // Lưu hoặc cập nhật User/Staff, mã hóa mật khẩu trước khi lưu
-    User save(User user, String rawPassword); 
-    
-    // Đổi trạng thái (Active/Inactive)
+
+    // Lưu/cập nhật (mã hóa nếu có rawPassword)
+    User save(User user, String rawPassword);
+
+    // Bật/tắt active
     void updateActiveStatus(Long id, boolean isActive);
-    
-    // Xóa (thường là disable thay vì xóa hẳn trong môi trường thực)
+
+    // Soft delete = disable
     void deleteById(Long id);
 
     boolean isEmailExist(String email);

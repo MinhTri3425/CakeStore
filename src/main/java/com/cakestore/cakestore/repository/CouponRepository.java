@@ -26,5 +26,5 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
         @Param("branchId") Long branchId,
         Pageable pageable
     );
-
+    boolean existsByBranch_Id(Long branchId);
 }

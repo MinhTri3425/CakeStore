@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface BranchRepository extends JpaRepository<Branch, Long> {
     // Tìm chi nhánh theo Code (để kiểm tra trùng)
     boolean existsByCode(String code);
+    
 }

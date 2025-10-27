@@ -56,12 +56,17 @@ public class BranchController {
         return "redirect:/admin/branches";
     }
 
-    // POST /admin/branches/{id}/delete - Xóa chi nhánh
     @PostMapping("/{id}/delete")
     public String deleteBranch(@PathVariable Long id, RedirectAttributes ra) {
-        // TODO: Kiểm tra xem chi nhánh có liên kết dữ liệu khác không trước khi xóa
-        branchService.deleteById(id);
-        ra.addFlashAttribute("success", "Xóa chi nhánh thành công!");
+        try {
+            branchService.deleteById(id);
+            ra.addFlashAttribute("success", "Xóa chi nhánh thành công!");
+        } catch (IllegalStateException ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Đã xảy ra lỗi khi xóa chi nhánh.");
+        }
         return "redirect:/admin/branches";
     }
+
 }

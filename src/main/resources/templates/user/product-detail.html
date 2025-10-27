@@ -1,0 +1,44 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/header :: layout(~{::body})">
+<body>
+<div class="row">
+  <div class="col-md-5">
+    <img class="img-fluid rounded" th:if="${#lists.size(p.images) > 0}" th:src="${p.images[0]}" alt="">
+  </div>
+  <div class="col-md-7">
+    <h3 th:text="${p.name}">Tên bánh</h3>
+    <div class="h5 text-danger" th:text="${#numbers.formatDecimal(p.price,1,0)} + ' đ'">0</div>
+    <p th:text="${p.shortDesc}">Mô tả ngắn</p>
+
+    <div class="d-flex gap-2 mb-3">
+      <form th:action="@{/cart/add}" method="post" class="d-flex gap-2">
+        <input type="hidden" name="productId" th:value="${p.id}">
+        <input type="number" min="1" name="qty" value="1" class="form-control" style="width:120px">
+        <button class="btn btn-primary">Thêm vào giỏ</button>
+      </form>
+      <form th:action="@{/fav/toggle}" method="post">
+        <input type="hidden" name="productId" th:value="${p.id}">
+        <button class="btn"
+                th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? 'btn-danger' : 'btn-outline-danger'">♥</button>
+      </form>
+    </div>
+
+    <div th:if="${p.variants != null and #lists.size(p.variants) > 0}">
+      <h6>Tuỳ chọn</h6>
+      <ul class="list-unstyled">
+        <li th:each="v : ${p.variants}">
+          <span th:text="${v.attrName + ': ' + v.attrValue}">Size: M</span>
+          <small class="text-muted" th:if="${v.priceAdj != null}"
+                th:text="' (' + (#numbers.formatDecimal(v.priceAdj,1,0)) + ' đ)'">(+0)</small>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <h6>Mô tả</h6>
+      <div th:utext="${p.description}">Mô tả dài</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

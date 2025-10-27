@@ -1,0 +1,58 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/header :: layout(~{::body})">
+<body>
+<h4>Kết quả tìm kiếm</h4>
+
+<form class="d-flex mb-3" method="get">
+  <input class="form-control me-2" name="q" th:value="${q}" placeholder="Nhập từ khóa">
+  <select class="form-select me-2" name="sort" th:value="${sort}">
+    <option value="newest">Mới nhất</option>
+    <option value="price_asc">Giá tăng</option>
+    <option value="price_desc">Giá giảm</option>
+    <option value="sold_desc">Bán chạy</option>
+    <option value="rating_desc">Đánh giá cao</option>
+  </select>
+  <button class="btn btn-outline-primary">Lọc</button>
+</form>
+
+<div class="row row-cols-2 row-cols-md-4 g-3">
+  <div class="col" th:each="p : ${data.content}">
+    <div class="card h-100">
+      <img th:if="${p.thumbnailUrl != null}" th:src="${p.thumbnailUrl}" class="card-img-top" alt="">
+      <div class="card-body">
+        <h6 class="card-title text-truncate" th:text="${p.name}">Tên</h6>
+        <div class="price" th:text="${#numbers.formatDecimal(p.price,1,0)} + ' đ'">0</div>
+      </div>
+      <div class="card-footer d-flex gap-2">
+        <form th:action="@{/fav/toggle}" method="post">
+          <input type="hidden" name="productId" th:value="${p.id}">
+          <button class="btn btn-sm"
+                  th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? 'btn-danger' : 'btn-outline-danger'">♥</button>
+        </form>
+        <a th:href="@{'/product/' + ${p.id}}" class="btn btn-sm btn-outline-secondary w-50">Chi tiết</a>
+        <form th:action="@{/cart/add}" method="post" class="w-50">
+          <input type="hidden" name="productId" th:value="${p.id}">
+          <button class="btn btn-sm btn-primary w-100">Thêm giỏ</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="mt-3">
+  <ul class="pagination">
+    <li class="page-item" th:classappend="${data.first}? 'disabled'">
+      <a class="page-link" th:href="@{|?q=${q}&sort=${sort}&page=${data.number-1}|}">«</a>
+    </li>
+    <li class="page-item" th:each="i : ${#numbers.sequence(0, data.totalPages-1)}"
+        th:classappend="${i==data.number}? 'active'">
+      <a class="page-link" th:text="${i+1}"
+         th:href="@{|?q=${q}&sort=${sort}&page=${i}|}">1</a>
+    </li>
+    <li class="page-item" th:classappend="${data.last}? 'disabled'">
+      <a class="page-link" th:href="@{|?q=${q}&sort=${sort}&page=${data.number+1}|}">»</a>
+    </li>
+  </ul>
+</nav>
+</body>
+</html>

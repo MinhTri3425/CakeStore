@@ -2,7 +2,11 @@ package com.cakestore.cakestore.service.impl;
 
 import com.cakestore.cakestore.entity.Category;
 import com.cakestore.cakestore.repository.CategoryRepository;
+import com.cakestore.cakestore.repository.ProductRepository;
 import com.cakestore.cakestore.service.CategoryService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,8 +16,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+    private final ProductRepository productRepository; // ✅ thêm dòng này
+
+    public CategoryServiceImpl(CategoryRepository categoryRepository,
+                               ProductRepository productRepository) { // ✅ inject thêm
         this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
@@ -50,7 +58,10 @@ public class CategoryServiceImpl implements CategoryService {
     
     @Override
     public void deleteById(Long id) {
-        // Lưu ý: Xóa vĩnh viễn có thể gây lỗi FK. Cần cân nhắc chỉ set isActive=false.
+    	long used = productRepository.countByCategoryId(id);
+        if (used > 0) {
+            throw new IllegalStateException("Không thể xoá: còn " + used + " sản phẩm đang dùng danh mục này.");
+        }
         categoryRepository.deleteById(id);
     }
     
@@ -64,4 +75,12 @@ public class CategoryServiceImpl implements CategoryService {
     private String generateSlug(String name) {
         return name.toLowerCase().replaceAll("\\s+", "-").replaceAll("[^a-z0-9-]", "");
     }
+
+    @Override
+    public Page<Category> search(String q, Boolean active, Pageable pageable) {
+        String query = (q == null || q.isBlank()) ? null : q.trim();
+        return categoryRepository.search(query, active, pageable);
+    }
+    
+    
 }

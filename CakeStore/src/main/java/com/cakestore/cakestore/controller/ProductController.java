@@ -72,12 +72,11 @@ public class ProductController {
      */
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
-        Product product = productService.getProductById(id);
+        Product product = productService.getProductForEdit(id); // dùng hàm mới đã fetch images
         if (product == null) {
             ra.addFlashAttribute("error", "Sản phẩm không tồn tại.");
             return "redirect:/admin/products";
         }
-
         model.addAttribute("product", product);
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("isEdit", true);
@@ -89,16 +88,31 @@ public class ProductController {
      */
     @PostMapping
     public String saveProduct(@ModelAttribute Product product, RedirectAttributes ra) {
-        // TODO: Validate dữ liệu (ví dụ: SKU, Slug phải unique, giá phải > 0)
-        // TODO: Xử lý Upload ảnh (Cloudinary) và lưu ProductImage
-        
-        // Cần lấy lại Category từ DB vì @ModelAttribute chỉ lấy ID qua form
-        // Category category = categoryService.findById(product.getCategory().getId());
-        // product.setCategory(category); 
-        
-        productService.saveProduct(product);
-        ra.addFlashAttribute("success", "Lưu sản phẩm thành công!");
-        return "redirect:/admin/products";
+    	// bắt buộc chọn category hợp lệ
+        if (product.getCategory() == null || product.getCategory().getId() == null) {
+            ra.addFlashAttribute("error", "Vui lòng chọn danh mục hợp lệ cho sản phẩm.");
+            return (product.getId() == null) ? "redirect:/admin/products/new"
+                                             : "redirect:/admin/products/" + product.getId() + "/edit";
+        }
+        var cat = categoryService.findById(product.getCategory().getId());
+        if (cat == null) {
+            ra.addFlashAttribute("error", "Danh mục đã chọn không tồn tại.");
+            return (product.getId() == null) ? "redirect:/admin/products/new"
+                                             : "redirect:/admin/products/" + product.getId() + "/edit";
+        }
+        product.setCategory(cat);
+
+
+        try {
+            productService.saveProduct(product);
+            ra.addFlashAttribute("success", "Lưu sản phẩm thành công!");
+            return "redirect:/admin/products";
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // vi phạm unique SKU/Slug...
+            ra.addFlashAttribute("error", "SKU hoặc Slug đã tồn tại. Vui lòng đổi giá trị khác.");
+            return (product.getId() == null) ? "redirect:/admin/products/new"
+                                             : "redirect:/admin/products/" + product.getId() + "/edit";
+        }
     }
 
     /**
@@ -108,7 +122,7 @@ public class ProductController {
     public String deleteProduct(@PathVariable Long id, RedirectAttributes ra) {
         // Cần xử lý logic: nếu sản phẩm có trong đơn hàng/tồn kho thì không được xóa vĩnh viễn (chỉ set Status=0)
         productService.deleteProduct(id);
-        ra.addFlashAttribute("success", "Xóa sản phẩm thành công (chỉ xóa khỏi DB, cần xem xét đổi thành disable/ẩn).");
+        ra.addFlashAttribute("success", "Xóa sản phẩm thành công.");
         return "redirect:/admin/products";
     }
 }

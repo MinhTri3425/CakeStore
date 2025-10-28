@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat với Khách hàng</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        .chat-container { height: 70vh; display: flex; flex-direction: column; border: 1px solid #ddd; border-radius: 5px; }
+        .chat-messages { flex-grow: 1; overflow-y: auto; padding: 15px; background-color: #f8f9fa; }
+        .chat-input { padding: 10px; border-top: 1px solid #ddd; }
+        .message-bubble { max-width: 75%; padding: 8px 12px; border-radius: 15px; margin-bottom: 8px; word-wrap: break-word; }
+        .message-self { background-color: #007bff; color: white; margin-left: auto; border-bottom-right-radius: 2px; }
+        .message-other { background-color: #e9ecef; color: #333; margin-right: auto; border-bottom-left-radius: 2px; }
+        .message-info { font-size: 0.75rem; text-align: center; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="list-group">
+                    <a th:href="@{/staff/home}" class="list-group-item list-group-item-action">Dashboard</a>
+                    <a th:href="@{/admin/products}" class="list-group-item list-group-item-action">Quản lý Sản phẩm</a>
+                    <a th:href="@{/staff/orders}" class="list-group-item list-group-item-action">Quản lý Đơn hàng</a>
+                    <a th:href="@{/staff/chat}" class="list-group-item list-group-item-action active">Chat với Khách hàng</a>
+                </div>
+                
+                <h5 class="mt-4">Khách hàng đang Chat</h5>
+                <div class="list-group" id="userList">
+                    <a href="#" class="list-group-item list-group-item-action active" data-user="user@cakestore.com">
+                        user@cakestore.com (Active)
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-user="khach_hang_A">
+                        Khách hàng A
+                    </a>
+                    </div>
+
+            </div>
+
+            <div class="col-md-9">
+                <h2 class="mb-4">Chat với Khách hàng <span id="currentChatUser" class="text-primary fs-5">user@cakestore.com</span></h2>
+                
+                <div class="chat-container">
+                    <div class="chat-messages" id="messageArea">
+                        <div class="message-info">Đã kết nối với hệ thống Chat...</div>
+                    </div>
+                    <form id="chatForm" class="chat-input d-flex">
+                        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." class="form-control me-2" autocomplete="off" required/>
+                        <button type="submit" class="btn btn-primary">Gửi</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+    <script th:inline="javascript">
+        // Lấy username/email của Staff
+const currentUser = /*[[${#authentication.name}]]*/ 'Staff';
+
+        const PRIVATE_CHAT_URL = '/app/chat.private';
+        let stompClient = null;
+        let currentReceiver = 'user@cakestore.com'; // Mặc định chat với user@cakestore.com
+
+        function connect() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, onConnected, onError);
+        }
+
+        function onConnected() {
+            // Subscribe tới queue riêng (cho private chat)
+            stompClient.subscribe(`/user/${currentUser}/queue/messages`, onPrivateMessageReceived);
+            
+            console.log("Connected to Chat. User Queue: /user/" + currentUser + "/queue/messages");
+        }
+
+        function onError(error) {
+            console.error('Could not connect to WebSocket server. Please refresh this page to try again!', error);
+            document.getElementById('messageArea').innerHTML += `<div class="message-info text-danger">Lỗi kết nối: ${error}</div>`;
+        }
+
+        function onPrivateMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+            // Chỉ hiển thị tin nhắn nếu nó liên quan đến người đang chat
+            if (message.sender === currentReceiver || message.sender === currentUser) {
+                displayMessage(message);
+            }
+        }
+
+        function sendMessage(event) {
+            const input = document.getElementById('chatInput');
+            const content = input.value.trim();
+
+            if (content && stompClient) {
+                const chatMessage = {
+                    sender: currentUser,
+                    receiver: currentReceiver, // Gửi đến người dùng đang chọn
+                    content: content
+                };
+                
+                // Gửi message private
+                stompClient.send(PRIVATE_CHAT_URL, {}, JSON.stringify(chatMessage));
+                
+                input.value = '';
+            }
+            event.preventDefault();
+        }
+
+        function displayMessage(message) {
+            const messageArea = document.getElementById('messageArea');
+            const messageElement = document.createElement('div');
+            
+            const senderName = message.sender;
+            const messageContent = message.content;
+            
+            // Dùng logic đơn giản: nếu sender là chính mình, là message-self
+            if (senderName === currentUser) {
+                messageElement.classList.add('message-bubble', 'message-self');
+            } else {
+                messageElement.classList.add('message-bubble', 'message-other');
+            }
+
+            messageElement.innerHTML = `<strong>${senderName}:</strong> ${messageContent}`;
+            messageArea.appendChild(messageElement);
+            messageArea.scrollTop = messageArea.scrollHeight; // Cuộn xuống dưới
+        }
+        
+        // --- Xử lý sự kiện ---
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('chatForm').addEventListener('submit', sendMessage);
+            
+            // Xử lý chuyển đổi người chat (mock)
+            document.querySelectorAll('#userList a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('#userList a').forEach(a => a.classList.remove('active'));
+                    this.classList.add('active');
+                    currentReceiver = this.getAttribute('data-user');
+                    document.getElementById('currentChatUser').textContent = currentReceiver;
+                    document.getElementById('messageArea').innerHTML = `<div class="message-info">Bắt đầu chat với ${currentReceiver}...</div>`;
+                });
+            });
+            
+            connect(); // Bắt đầu kết nối
+        });
+
+    </script>
+</body>
+</html>

@@ -6,6 +6,7 @@ import com.cakestore.cakestore.service.ProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -43,4 +44,11 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
+    
+    @Transactional(readOnly = true)
+    public Product getProductForEdit(Long id) {
+        return productRepository.findByIdWithImages(id).orElse(null);
+    }
+    
+    
 }

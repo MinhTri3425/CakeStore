@@ -35,11 +35,14 @@
 						type="text" th:field="*{sku}" class="form-control" id="sku"
 						required>
 				</div>
+				<input type="hidden" th:field="*{slug}" th:if="${isEdit}" />
+
 				<div class="mb-3 col-md-6">
-					<label for="slug" class="form-label">Slug (URL thân thiện)</label>
-					<input type="text" th:field="*{slug}" class="form-control"
-						id="slug" required>
+					<label for="price" class="form-label">Giá bán</label> <input
+						type="number" th:field="*{price}" class="form-control" id="price"
+						min="0" step="0.01" required>
 				</div>
+				<input type="hidden" th:field="*{compareAtPrice}" value="" />
 			</div>
 
 			<div class="mb-3">
@@ -50,20 +53,6 @@
 					<option th:each="cat : ${categories}" th:value="${cat.id}"
 						th:text="${cat.name}"></option>
 				</select>
-
-			</div>
-
-			<div class="row">
-				<div class="mb-3 col-md-6">
-					<label for="price" class="form-label">Giá bán</label> <input
-						type="number" th:field="*{price}" class="form-control" id="price"
-						min="0" step="0.01" required>
-				</div>
-				<div class="mb-3 col-md-6">
-					<label for="compareAtPrice" class="form-label">Giá so sánh
-						(Giá cũ)</label> <input type="number" th:field="*{compareAtPrice}"
-						class="form-control" id="compareAtPrice" min="0" step="0.01">
-				</div>
 			</div>
 
 			<div class="mb-3">
@@ -101,13 +90,6 @@
 						</div>
 					</div>
 				</div>
-			</div>
-
-			<hr />
-			<h5 class="mb-3">Biến thể (Kích thước, Hương vị...)</h5>
-			<div id="variants-container">
-				<p class="text-muted">Chức năng thêm/sửa biến thể sẽ được tích
-					hợp với JavaScript.</p>
 			</div>
 
 			<button type="submit" class="btn btn-primary"

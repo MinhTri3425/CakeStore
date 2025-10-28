@@ -1,3 +1,4 @@
+// CakeStore/src/main/java/com/cakestore/cakestore/repository/ProductRepository.java
 package com.cakestore.cakestore.repository;
 
 import com.cakestore.cakestore.entity.Product;
@@ -16,7 +17,7 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @EntityGraph(attributePaths = "category")
+    @EntityGraph(attributePaths = {"category", "images"})
     @Query("""
        SELECT p FROM Product p
        WHERE lower(p.name) LIKE lower(concat('%', :keyword, '%'))
@@ -24,7 +25,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     """)
     Page<Product> searchProducts(@Param("keyword") String keyword, Pageable pageable);
 
-    @EntityGraph(attributePaths = "category")
+    @EntityGraph(attributePaths = {"category", "images"})
     @Query("""
        SELECT p FROM Product p
        WHERE (lower(p.name) LIKE lower(concat('%', :keyword, '%'))

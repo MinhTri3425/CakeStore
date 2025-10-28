@@ -39,7 +39,7 @@ public class Review {
     private Integer rating;
 
     @Lob
-    @Column(name = "Content", nullable = false)
+    @Column(name = "Content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String content;
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)

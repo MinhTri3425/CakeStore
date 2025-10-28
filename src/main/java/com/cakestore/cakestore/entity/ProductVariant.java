@@ -20,11 +20,11 @@ public class ProductVariant {
     @JoinColumn(name = "ProductId", nullable = false)
     private Product product;
 
-    @Column(name = "AttrName", nullable = false, length = 50)
-    private String attrName; // ví dụ: Size, Flavor
+    @Column(name = "AttrName", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
+    private String attrName; // ví dụ: Size, Flavor, "Hương vị", "Topping"
 
-    @Column(name = "AttrValue", nullable = false, length = 50)
-    private String attrValue; // ví dụ: 6 inch, Chocolate
+    @Column(name = "AttrValue", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
+    private String attrValue;
 
     @Column(name = "PriceAdj", precision = 12, scale = 2)
     private BigDecimal priceAdj; // có thể âm/dương hoặc null

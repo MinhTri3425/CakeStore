@@ -13,13 +13,13 @@ public class Banner {
     @Column(name = "Id")
     private Long id;
 
-    @Column(name = "Title", length = 150)
+    @Column(name = "Title", length = 150, columnDefinition = "NVARCHAR(150)")
     private String title;
 
-    @Column(name = "ImageUrl", nullable = false, length = 500)
+    @Column(name = "ImageUrl", nullable = false, length = 500, columnDefinition = "NVARCHAR(500)")
     private String imageUrl;
 
-    @Column(name = "LinkTo", length = 500)
+    @Column(name = "LinkTo", length = 500, columnDefinition = "NVARCHAR(500)")
     private String linkTo;
 
     @Column(name = "SortOrder", nullable = false)

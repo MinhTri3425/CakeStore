@@ -27,7 +27,7 @@ public class Cart {
     private Branch branch;
 
     @Convert(converter = CartStatus.Converter.class)
-    @Column(name = "Status", nullable = false, length = 20)
+    @Column(name = "Status", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private CartStatus status = CartStatus.ACTIVE;
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)

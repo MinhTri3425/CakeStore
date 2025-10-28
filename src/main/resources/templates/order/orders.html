@@ -1,0 +1,214 @@
+<!-- templates/order/orders.html -->
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/header :: layout(~{::body})">
+<body style="background:#0b1220;color:#e5e7eb;font-family:'Inter',sans-serif;">
+
+<style>
+  :root{
+    --bg:#0b1220;
+    --card:#111827;
+    --border:rgba(148,163,184,.25);
+    --muted:#94a3b8;
+    --text:#e5e7eb;
+    --accent-grad:linear-gradient(135deg,#22c55e,#60a5fa);
+  }
+
+  h4{
+    font-weight:800;
+    color:#d1fae5;
+    margin:1rem 0 1.5rem;
+    text-shadow:0 0 10px rgba(34,197,94,.15);
+  }
+
+  .orders-card{
+    background:rgba(17,24,39,.55);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:0 16px 40px rgba(0,0,0,.6);
+    padding:16px 20px;
+    color:var(--text);
+  }
+
+  table.orders-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:.9rem;
+    color:#fff;
+  }
+
+  table.orders-table thead th{
+    background:rgba(15,23,42,.9);
+    color:#f1f5f9;
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:.7rem;
+    letter-spacing:.03em;
+    border-bottom:1px solid var(--border);
+    padding:10px 12px;
+  }
+
+  table.orders-table tbody tr{
+    background:rgba(17,24,39,.6);
+    border-bottom:1px solid var(--border);
+    transition:.2s;
+  }
+  table.orders-table tbody tr:hover{
+    background:rgba(96,165,250,.08);
+  }
+
+  table.orders-table tbody td{
+    padding:12px;
+    vertical-align:middle;
+    color:#fff;
+    font-weight:500;
+  }
+
+  .text-dim{
+    color:var(--muted);
+    font-weight:400;
+  }
+
+  .money{
+    color:#a5f3fc;
+    font-weight:600;
+  }
+
+  .status-badge{
+    display:inline-block;
+    font-size:.7rem;
+    line-height:1.2;
+    font-weight:600;
+    border-radius:999px;
+    padding:4px 8px;
+    border:1px solid transparent;
+  }
+
+  /* order status colors */
+  .badge-NEW        { background:rgba(96,165,250,.12);  color:#bfdbfe; border-color:rgba(96,165,250,.4); }
+  .badge-CONFIRMED  { background:rgba(16,185,129,.12);  color:#6ee7b7; border-color:rgba(16,185,129,.4); }
+  .badge-SHIPPING   { background:rgba(251,191,36,.12);  color:#fde68a; border-color:rgba(251,191,36,.4); }
+  .badge-DELIVERED  { background:rgba(34,197,94,.12);   color:#a7f3d0; border-color:rgba(34,197,94,.4); }
+  .badge-CANCELED   { background:rgba(239,68,68,.12);   color:#fecaca; border-color:rgba(239,68,68,.4); }
+  .badge-RETURNED   { background:rgba(244,114,182,.12); color:#fde2f5; border-color:rgba(244,114,182,.45); }
+
+  .go-detail{
+    color:#93c5fd;
+    font-weight:600;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .go-detail:hover{
+    color:#cde3ff;
+    text-decoration:underline;
+  }
+
+  .empty-box{
+    background:rgba(15,23,42,.6);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:0 16px 40px rgba(0,0,0,.6);
+    padding:24px;
+    text-align:center;
+    color:#94a3b8;
+    font-size:.9rem;
+    font-weight:500;
+    line-height:1.5;
+  }
+  .empty-box span.emoji{
+    font-size:1.4rem;
+    display:block;
+    margin-bottom:.5rem;
+  }
+  .home-link{
+    color:#93c5fd;
+    text-decoration:none;
+    font-weight:600;
+  }
+  .home-link:hover{
+    color:#cde3ff;
+    text-decoration:underline;
+  }
+</style>
+
+<div class="container" style="max-width:1100px;padding:16px 16px 60px;">
+  <h4>Lịch sử đơn hàng</h4>
+
+  <!-- nếu không có đơn -->
+  <div th:if="${#lists.isEmpty(orders)}" class="empty-box">
+    <span class="emoji">🫠</span>
+    Chưa có đơn hàng nào.<br/>
+    Mua bánh đi rồi quay lại nha.
+    <div class="mt-3">
+      <a href="/" class="home-link">⬅ Tiếp tục mua sắm</a>
+    </div>
+  </div>
+
+  <!-- nếu có đơn -->
+  <div th:unless="${#lists.isEmpty(orders)}" class="orders-card">
+
+    <div class="table-responsive">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>MÃ ĐƠN</th>
+            <th>NGÀY TẠO</th>
+            <th>CHI NHÁNH</th>
+            <th>TỔNG TIỀN</th>
+            <th>TRẠNG THÁI</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr th:each="o : ${orders}">
+          <!-- Mã đơn -->
+          <td>
+            <div style="font-weight:600;color:#fff;">#<span th:text="${o.id}">123</span></div>
+          </td>
+
+          <!-- Ngày tạo -->
+          <td>
+            <div th:if="${o.createdAt != null}"
+                 th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}">29/10/2025 12:34</div>
+            <div th:if="${o.createdAt == null}" class="text-dim">--:--</div>
+          </td>
+
+          <!-- Chi nhánh -->
+          <td>
+            <div th:text="${o.branch != null ? o.branch.name : '---'}">CakeStore Q1</div>
+            <div class="text-dim" th:if="${o.branch != null && o.branch.city != null}"
+                 th:text="${o.branch.city}">TP.HCM</div>
+          </td>
+
+          <!-- Tổng tiền -->
+          <td class="money"
+              th:text="${#numbers.formatDecimal(o.total,0,'COMMA',0,'POINT')} + ' đ'">
+            250.000 đ
+          </td>
+
+          <!-- Trạng thái -->
+          <td>
+            <span class="status-badge"
+                  th:text="${o.status}"
+                  th:classappend="' badge-' + ${o.status}">
+              NEW
+            </span>
+          </td>
+
+          <!-- Link -->
+          <td class="text-end">
+            <a class="go-detail"
+               th:href="@{'/orders/' + ${o.id}}">
+              Xem chi tiết ›
+            </a>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

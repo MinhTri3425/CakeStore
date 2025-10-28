@@ -18,17 +18,17 @@ public class AuditLog {
     @JoinColumn(name = "UserId")
     private User user;
 
-    @Column(name = "Action", nullable = false, length = 100)
+    @Column(name = "Action", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
     private String action; // ví dụ: ORDER_STATUS_CHANGE
 
-    @Column(name = "Entity", length = 100)
+    @Column(name = "Entity", length = 100, columnDefinition = "NVARCHAR(100)")
     private String entity; // ví dụ: Orders
 
-    @Column(name = "EntityId", length = 100)
+    @Column(name = "EntityId", length = 100, columnDefinition = "NVARCHAR(100)")
     private String entityId; // ví dụ: "123"
 
     @Lob
-    @Column(name = "Meta")
+    @Column(name = "Meta", columnDefinition = "NVARCHAR(MAX)")
     private String meta; // JSON text
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)

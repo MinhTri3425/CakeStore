@@ -38,8 +38,9 @@
 
       <div style="margin-top:1rem;">
         <a th:href="@{/account}"
-           style="color:#60a5fa;font-size:.9rem;text-decoration:none;">
-          ← Quay lại trang tài khoản
+           style="color:#60a5fa;font-size:.9rem;text-decoration:none;"
+           onclick="event.preventDefault(); if (window.history.length > 1) { window.history.back(); } else { window.location.href='/account'; }">
+          ← Quay lại
         </a>
       </div>
     </header>

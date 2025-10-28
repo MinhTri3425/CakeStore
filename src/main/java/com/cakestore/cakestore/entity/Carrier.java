@@ -18,10 +18,10 @@ public class Carrier {
     private Long id;
 
     /** Mã hãng: GHN, GHTK, INTERNAL... */
-    @Column(name = "Code", nullable = false, length = 50, unique = true)
+    @Column(name = "Code", nullable = false, length = 50, unique = true, columnDefinition = "NVARCHAR(50)")
     private String code;
 
-    @Column(name = "Name", nullable = false, length = 120)
+    @Column(name = "Name", nullable = false, length = 120, columnDefinition = "NVARCHAR(120)")
     private String name;
 
     @Column(name = "IsActive", nullable = false)

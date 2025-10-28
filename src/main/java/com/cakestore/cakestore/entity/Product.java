@@ -21,20 +21,20 @@ public class Product {
     @Column(name = "Id")
     private Long id;
 
-    @Column(name = "Sku", nullable = false, length = 64)
+    @Column(name = "Sku", nullable = false, length = 64, columnDefinition = "NVARCHAR(64)")
     private String sku;
 
-    @Column(name = "Name", nullable = false, length = 150)
+    @Column(name = "Name", nullable = false, length = 150, columnDefinition = "NVARCHAR(150)")
     private String name;
 
-    @Column(name = "Slug", nullable = false, length = 150, unique = true)
+    @Column(name = "Slug", nullable = false, length = 150, unique = true, columnDefinition = "NVARCHAR(150)")
     private String slug;
 
-    @Column(name = "ShortDesc", length = 500)
+    @Column(name = "ShortDesc", length = 500, columnDefinition = "NVARCHAR(500)")
     private String shortDesc;
 
     @Lob
-    @Column(name = "Description")
+    @Column(name = "Description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     // many products -> one category

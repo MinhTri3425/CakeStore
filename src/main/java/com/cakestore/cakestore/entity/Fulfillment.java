@@ -24,16 +24,16 @@ public class Fulfillment {
 
     // Trạng thái: PACKING, OUT_FOR_DELIVERY, DELIVERED, FAILED
     @Convert(converter = Status.Converter.class)
-    @Column(name = "Status", nullable = false, length = 20)
+    @Column(name = "Status", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Status status = Status.PACKING;
 
-    @Column(name = "CarrierCode", length = 50)
+    @Column(name = "CarrierCode", length = 50, columnDefinition = "NVARCHAR(50)")
     private String carrierCode; // GHN/GHTK/INTERNAL...
 
-    @Column(name = "TrackingNo", length = 100)
+    @Column(name = "TrackingNo", length = 100, columnDefinition = "NVARCHAR(100)")
     private String trackingNo;
 
-    @Column(name = "Note", length = 300)
+    @Column(name = "Note", length = 300, columnDefinition = "NVARCHAR(300)")
     private String note;
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)

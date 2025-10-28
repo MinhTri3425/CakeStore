@@ -22,7 +22,7 @@ public class RefreshToken {
     @JoinColumn(name = "UserId", nullable = false)
     private User user;
 
-    @Column(name = "Token", nullable = false, length = 300, unique = true)
+    @Column(name = "Token", nullable = false, length = 300, unique = true, columnDefinition = "NVARCHAR(300)")
     private String token;
 
     @Column(name = "ExpiresAt", nullable = false)

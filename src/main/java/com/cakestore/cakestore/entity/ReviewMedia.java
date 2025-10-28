@@ -19,11 +19,11 @@ public class ReviewMedia {
     @JoinColumn(name = "ReviewId", nullable = false)
     private Review review;
 
-    @Column(name = "MediaUrl", nullable = false, length = 500)
+    @Column(name = "MediaUrl", nullable = false, length = 500, columnDefinition = "NVARCHAR(500)")
     private String mediaUrl;
 
     @Convert(converter = MediaType.Converter.class)
-    @Column(name = "MediaType", nullable = false, length = 20)
+    @Column(name = "MediaType", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private MediaType mediaType; // image | video
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)

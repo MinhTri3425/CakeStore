@@ -28,7 +28,7 @@ public class ShipAssignment {
     private LocalDateTime assignedAt;
 
     @Convert(converter = Status.Converter.class)
-    @Column(name = "Status", nullable = false, length = 20)
+    @Column(name = "Status", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Status status = Status.ASSIGNED;
 
     /* ===== Constructors ===== */

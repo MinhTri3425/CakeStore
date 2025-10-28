@@ -117,111 +117,181 @@
     background-clip:text;
     color:transparent;
   }
+
+  /* ==== BRANCH HINT ==== */
+  .branch-warning{
+    font-size:.8rem;
+    color:#facc15;
+    text-align:right;
+    line-height:1.4;
+  }
+
+  .branch-ok{
+    font-size:.8rem;
+    color:#94a3b8;
+    text-align:right;
+    line-height:1.4;
+  }
 </style>
 
-<h4>Giỏ hàng</h4>
+<div class="container" style="max-width:1000px;padding:16px 16px 60px;">
+  <h4>Giỏ hàng</h4>
 
-<div th:if="${#lists.isEmpty(cart.items())}">
-  <div class="alert alert-info"
-       style="background:rgba(59,130,246,.12); border:1px solid rgba(96,165,250,.4); color:#dbeafe;">
-    Giỏ hàng đang trống. <a href="/" class="link-light">Tiếp tục mua sắm</a>
-  </div>
-</div>
-
-<div th:unless="${#lists.isEmpty(cart.items())}">
-  <table class="table align-middle">
-    <thead>
-    <tr>
-      <th>Sản phẩm</th>
-      <th style="width:160px">SL</th>
-      <th>Đơn giá</th>
-      <th>Tạm tính</th>
-      <th style="width:90px"></th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="l : ${cart.items()}">
-      <td th:text="${l.name}">Tên SP</td>
-      <td>
-        <form th:action="@{/cart/set-qty}" method="post" class="d-flex"
-              onsubmit="return cartUpdateOnce(this)">
-          <!-- CSRF token -->
-          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-          <input type="hidden" name="productId" th:value="${l.productId}">
-          <input type="hidden" name="variantId" th:value="${l.variantId}">
-          <input type="number" name="qty" min="0"
-                 class="form-control form-control-sm" style="width:90px"
-                 th:value="${l.qty}">
-          <button type="submit" class="btn btn-sm btn-outline-secondary ms-2">Cập nhật</button>
-        </form>
-      </td>
-      <td th:text="${#numbers.formatDecimal(l.unitPrice,1,0)} + ' đ'">0</td>
-      <td th:text="${#numbers.formatDecimal(l.lineTotal(),1,0)} + ' đ'">0</td>
-      <td>
-        <form th:action="@{/cart/remove}" method="post"
-              onsubmit="return cartUpdateOnce(this)">
-          <!-- CSRF token -->
-          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-          <input type="hidden" name="productId" th:value="${l.productId}">
-          <input type="hidden" name="variantId" th:value="${l.variantId}">
-          <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
-        </form>
-      </td>
-    </tr>
-    </tbody>
-  </table>
-
-  <!-- ==== COUPON + TOTAL ==== -->
-  <div class="row g-3 align-items-start">
-    <div class="col-md-6">
-      <form class="d-flex gap-2" th:action="@{/cart/apply-coupon}" method="post"
-            onsubmit="return cartUpdateOnce(this)">
-        <!-- CSRF token -->
-        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-        <input class="form-control" name="code"
-               placeholder="Nhập mã giảm giá"
-               th:value="${session.COUPON_CODE}">
-        <button type="submit" class="btn btn-outline-primary">Áp dụng</button>
-      </form>
-      <p class="coupon-note mt-2"
-         th:if="${session.COUPON_MSG != null}"
-         th:text="${session.COUPON_MSG}"></p>
+  <div th:if="${#lists.isEmpty(cart.items())}">
+    <div class="alert alert-info"
+         style="background:rgba(59,130,246,.12); border:1px solid rgba(96,165,250,.4); color:#dbeafe;">
+      Giỏ hàng đang trống.
+      <a href="/" class="link-light">Tiếp tục mua sắm</a>
     </div>
+  </div>
 
-    <div class="col-md-6 text-end">
-      <div class="summary d-inline-block text-start">
-        <div>Tạm tính: <b th:text="${#numbers.formatDecimal(cart.subtotal(),1,0)} + ' đ'">0</b></div>
-        <div th:if="${session.COUPON_VALUE != null}">
-          Giảm: <b class="text-success"
-                  th:text="${#numbers.formatDecimal(session.COUPON_VALUE,1,0)} + ' đ'">0</b>
-        </div>
-        <div class="mt-2">
-          Tổng:
-          <span class="total"
-                th:text="${
-                  #numbers.formatDecimal(
-                    cart.subtotal().subtract(session.COUPON_VALUE?:T(java.math.BigDecimal).ZERO),1,0)
-                } + ' đ'">0</span>
+  <div th:unless="${#lists.isEmpty(cart.items())}">
+
+    <table class="table align-middle w-100">
+      <thead>
+      <tr>
+        <th>Sản phẩm</th>
+        <th style="width:160px">SL</th>
+        <th>Đơn giá</th>
+        <th>Tạm tính</th>
+        <th style="width:90px"></th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="l : ${cart.items()}">
+        <td th:text="${l.name}">Tên SP</td>
+        <td>
+          <form th:action="@{/cart/set-qty}" method="post" class="d-flex"
+                onsubmit="return cartUpdateOnce(this)">
+            <!-- CSRF token -->
+            <input type="hidden" th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+
+            <input type="hidden" name="productId" th:value="${l.productId}">
+            <input type="hidden" name="variantId" th:value="${l.variantId}">
+
+            <input type="number" name="qty" min="0"
+                   class="form-control form-control-sm" style="width:90px"
+                   th:value="${l.qty}">
+            <button type="submit" class="btn btn-sm btn-outline-secondary ms-2">
+              Cập nhật
+            </button>
+          </form>
+        </td>
+        <td th:text="${#numbers.formatDecimal(l.unitPrice,0,'COMMA',0,'POINT')} + ' đ'">0</td>
+        <td th:text="${#numbers.formatDecimal(l.lineTotal(),0,'COMMA',0,'POINT')} + ' đ'">0</td>
+        <td>
+          <form th:action="@{/cart/remove}" method="post"
+                onsubmit="return cartUpdateOnce(this)">
+            <!-- CSRF token -->
+            <input type="hidden" th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <input type="hidden" name="productId" th:value="${l.productId}">
+            <input type="hidden" name="variantId" th:value="${l.variantId}">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- ==== COUPON + TOTAL ==== -->
+    <div class="row g-3 align-items-start mt-3">
+      <div class="col-md-6">
+        <form class="d-flex gap-2" th:action="@{/cart/apply-coupon}" method="post"
+              onsubmit="return cartUpdateOnce(this)">
+          <!-- CSRF token -->
+          <input type="hidden" th:if="${_csrf != null}"
+                 th:name="${_csrf.parameterName}"
+                 th:value="${_csrf.token}" />
+
+          <input class="form-control" name="code"
+                 placeholder="Nhập mã giảm giá"
+                 th:value="${session.COUPON_CODE}">
+          <button type="submit" class="btn btn-outline-primary">
+            Áp dụng
+          </button>
+        </form>
+        <p class="coupon-note mt-2"
+           th:if="${session.COUPON_MSG != null}"
+           th:text="${session.COUPON_MSG}"></p>
+      </div>
+
+      <div class="col-md-6 text-end">
+        <div class="summary d-inline-block text-start">
+          <div>
+            Tạm tính:
+            <b th:text="${#numbers.formatDecimal(cart.subtotal(),0,'COMMA',0,'POINT')} + ' đ'">0</b>
+          </div>
+
+          <div th:if="${session.COUPON_VALUE != null}">
+            Giảm:
+            <b class="text-success"
+               th:text="${#numbers.formatDecimal(session.COUPON_VALUE,0,'COMMA',0,'POINT')} + ' đ'">0</b>
+          </div>
+
+          <div class="mt-2">
+            Tổng:
+            <span class="total"
+                  th:text="${
+                    #numbers.formatDecimal(
+                      cart.subtotal().subtract(session.COUPON_VALUE?:T(java.math.BigDecimal).ZERO)
+                    ,0,'COMMA',0,'POINT')
+                  } + ' đ'">0</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <hr style="border-color:rgba(148,163,184,.2)">
+    <hr style="border-color:rgba(148,163,184,.2)">
 
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <a class="btn btn-link" href="/">⬅ Tiếp tục mua sắm</a>
-    <div class="d-flex gap-2">
-      <form th:action="@{/cart/clear}" method="post" class="d-inline"
-            onsubmit="return cartUpdateOnce(this)">
-        <!-- CSRF token -->
-        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-        <button type="submit" class="btn btn-outline-secondary">Xóa giỏ</button>
-      </form>
-      <a class="btn btn-primary" href="#">Thanh toán (demo)</a>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+      <a class="btn btn-link" href="/">⬅ Tiếp tục mua sắm</a>
+
+      <div class="d-flex flex-column align-items-end gap-2 text-end">
+
+        <!-- trạng thái chi nhánh -->
+        <!-- case đã có session.activeBranchId -->
+        <div class="branch-ok"
+             th:if="${session.activeBranchId != null}">
+          Đang chọn chi nhánh giao hàng.
+        </div>
+
+        <!-- case chưa có session.activeBranchId -->
+        <!-- tụi mình sẽ quyết định show / hide bằng JS dựa trên cookie BRANCH_ID -->
+        <div class="branch-warning"
+             th:if="${session.activeBranchId == null}"
+             id="branchWarn">
+          ⚠ Chưa chọn chi nhánh giao hàng.
+          <br/>Chọn chi nhánh ở header trước khi thanh toán.
+        </div>
+
+        <div class="d-flex gap-2">
+          <form th:action="@{/cart/clear}" method="post" class="d-inline"
+                onsubmit="return cartUpdateOnce(this)">
+            <!-- CSRF token -->
+            <input type="hidden" th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit" class="btn btn-outline-secondary">
+              Xóa giỏ
+            </button>
+          </form>
+
+          <!-- Nút đi tới checkout -->
+          <a class="btn btn-primary"
+             th:href="@{/checkout}">
+            Thanh toán
+          </a>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+
+  </div><!-- /unless empty -->
+</div><!-- /container -->
 
 <!-- ==== Chặn double-submit & Enter spam ==== -->
 <script>
@@ -231,13 +301,11 @@
     const btn = form.querySelector('button[type=submit]');
     if (btn) {
       btn.disabled = true;
-      // Đổi text nhẹ cho biết đang chạy (optional)
       const t = btn.textContent;
       btn.dataset.prev = t;
       btn.textContent = 'Đang xử lý...';
-      // 5s tự khôi phục trong trường hợp điều hướng bị chặn (optional)
       setTimeout(() => {
-        if (!document.hidden) { // nếu chưa điều hướng
+        if (!document.hidden) {
           form.dataset.busy = '0';
           btn.disabled = false;
           btn.textContent = btn.dataset.prev || t;
@@ -247,7 +315,7 @@
     return true;
   }
 
-  // Chặn Enter trong input number tạo submit lặp
+  // Chặn Enter trong input number để nó không spam submit form set-qty
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
       const form = e.target?.closest('form[action$="/cart/set-qty"]');
@@ -258,8 +326,24 @@
       }
     }
   });
+
+  // Ẩn warning nếu cookie BRANCH_ID đã có (tức user đã chọn chi nhánh ở header,
+  // nhưng session.activeBranchId hiện vẫn chưa sync trong phiên này)
+  (function () {
+    var warnEl = document.getElementById('branchWarn');
+    if (!warnEl) return; // nếu Thymeleaf đã không render vì activeBranchId != null thì thôi
+
+    var cookieBranch = document.cookie
+      .split(';')
+      .map(function (c){ return c.trim(); })
+      .find(function (c){ return c.startsWith('BRANCH_ID='); });
+
+    if (cookieBranch) {
+      // user đã có chi nhánh (theo cookie) => hide warning
+      warnEl.style.display = 'none';
+    }
+  })();
 </script>
 
 </body>
 </html>
-    

@@ -19,22 +19,22 @@ public class Address {
     @JoinColumn(name = "UserId", nullable = false)
     private User user;
 
-    @Column(name = "FullName", nullable = false, length = 120)
+    @Column(name = "FullName", nullable = false, length = 120, columnDefinition = "NVARCHAR(120)")
     private String fullName;
 
-    @Column(name = "Phone", nullable = false, length = 20)
+    @Column(name = "Phone", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private String phone;
 
-    @Column(name = "Line1", nullable = false, length = 255)
+    @Column(name = "Line1", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String line1;
 
-    @Column(name = "Ward", length = 120)
+    @Column(name = "Ward", length = 120, columnDefinition = "NVARCHAR(120)")
     private String ward;
 
-    @Column(name = "District", length = 120)
+    @Column(name = "District", length = 120, columnDefinition = "NVARCHAR(120)")
     private String district;
 
-    @Column(name = "City", nullable = false, length = 120)
+    @Column(name = "City", nullable = false, length = 120, columnDefinition = "NVARCHAR(120)")
     private String city;
 
     @Column(name = "IsDefault", nullable = false)

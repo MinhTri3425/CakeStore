@@ -21,21 +21,21 @@ public class PaymentTransaction {
     private Order order;
 
     @Convert(converter = Provider.Converter.class)
-    @Column(name = "Provider", nullable = false, length = 20)
+    @Column(name = "Provider", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Provider provider; // COD / VNPAY / MOMO
 
-    @Column(name = "ProviderTxnId", length = 128)
+    @Column(name = "ProviderTxnId", length = 128, columnDefinition = "NVARCHAR(128)")
     private String providerTxnId;
 
     @Column(name = "Amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
     @Convert(converter = Status.Converter.class)
-    @Column(name = "Status", nullable = false, length = 20)
+    @Column(name = "Status", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Status status; // created / success / failed / refunded
 
     @Lob
-    @Column(name = "RawPayload")
+    @Column(name = "RawPayload", columnDefinition = "NVARCHAR(MAX)")
     private String rawPayload;
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)

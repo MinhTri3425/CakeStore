@@ -48,18 +48,18 @@ public class Order {
 
     // ===== Status/Method =====
     @Convert(converter = PaymentMethod.Converter.class)
-    @Column(name = "PaymentMethod", length = 20)
+    @Column(name = "PaymentMethod", length = 20, columnDefinition = "NVARCHAR(20)")
     private PaymentMethod paymentMethod; // COD/VNPAY/MOMO (nullable)
 
     @Convert(converter = PaymentStatus.Converter.class)
-    @Column(name = "PaymentStatus", nullable = false, length = 20)
+    @Column(name = "PaymentStatus", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
     @Convert(converter = OrderStatus.Converter.class)
-    @Column(name = "Status", nullable = false, length = 20)
+    @Column(name = "Status", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private OrderStatus status = OrderStatus.NEW;
 
-    @Column(name = "Note", length = 500)
+    @Column(name = "Note", length = 500, columnDefinition = "NVARCHAR(500)")
     private String note;
 
     // DB tự set
@@ -236,7 +236,7 @@ public class Order {
     @Transient
     public BigDecimal calcTotalFromItems() {
         return items.stream()
-                .map(i -> i.getLineTotal())
+                .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

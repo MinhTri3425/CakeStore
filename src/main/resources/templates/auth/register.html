@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Đăng ký tài khoản - CakeStore</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     body {
       background: linear-gradient(135deg, #f8d7e8, #ffe6cc);
@@ -11,11 +12,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: "Poppins", sans-serif;
     }
     .card {
       border: none;
       border-radius: 20px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 420px;
+      animation: fadeInUp 0.6s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .btn-primary {
       background: linear-gradient(135deg, #ff7eb3, #ff758c);
@@ -28,32 +36,154 @@
     .form-control {
       border-radius: 10px;
     }
+    .password-wrapper {
+      position: relative;
+    }
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #888;
+    }
+    .password-hint {
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 3px;
+    }
+    #strengthBar {
+      height: 6px;
+      border-radius: 10px;
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+    #passwordError, #confirmError {
+      display: none;
+    }
   </style>
 </head>
 <body>
-<div class="card p-4" style="width: 420px;">
+
+<div class="card p-4">
   <div class="text-center mb-3">
     <h3 class="fw-bold text-primary">Đăng ký tài khoản</h3>
     <p class="text-muted small">Tạo tài khoản để mua hàng nhanh chóng hơn 🎂</p>
   </div>
-  <form th:action="@{/register}" method="post" th:object="${user}">
+
+  <form th:action="@{/register}" method="post" th:object="${user}" onsubmit="return validateForm()">
     <div class="mb-3">
       <label class="form-label">Họ tên</label>
       <input type="text" th:field="*{fullName}" class="form-control" required>
     </div>
+
     <div class="mb-3">
       <label class="form-label">Email</label>
       <input type="email" th:field="*{email}" class="form-control" required>
     </div>
+
+    <!-- Mật khẩu -->
     <div class="mb-3">
       <label class="form-label">Mật khẩu</label>
-      <input type="password" name="password" class="form-control" required>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" class="form-control" minlength="8" required>
+        <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
+      </div>
+      <div class="password-hint">Ít nhất 8 ký tự, bao gồm chữ và số.</div>
+
+      <!-- Thanh đo độ mạnh -->
+      <div class="mt-2">
+        <div class="progress" style="height:6px;">
+          <div id="strengthBar" class="progress-bar"></div>
+        </div>
+        <small id="strengthText" class="text-muted"></small>
+      </div>
+
+      <div id="passwordError" class="text-danger small mt-1">❌ Mật khẩu quá ngắn.</div>
     </div>
-    <button type="submit" class="btn btn-primary w-100 mt-2">Đăng ký</button>
+
+    <!-- Xác nhận mật khẩu -->
+    <div class="mb-3">
+      <label class="form-label">Xác nhận mật khẩu</label>
+      <div class="password-wrapper">
+        <input type="password" id="confirmPassword" class="form-control" required>
+        <i class="bi bi-eye-slash toggle-password" id="toggleConfirm"></i>
+      </div>
+      <div id="confirmError" class="text-danger small mt-1">❌ Mật khẩu không khớp.</div>
+    </div>
+
+   <button type="submit" class="btn btn-primary w-100"
+  onclick="this.disabled=true; this.innerText='Đang xử lý...'; this.form.submit();">
+  Đăng ký
+</button>
   </form>
+
   <div class="text-center mt-3">
     <a th:href="@{/login}" class="text-decoration-none">Đã có tài khoản? <b>Đăng nhập ngay</b></a>
   </div>
 </div>
+
+<script>
+  const password = document.getElementById("password");
+  const confirmPassword = document.getElementById("confirmPassword");
+  const togglePassword = document.getElementById("togglePassword");
+  const toggleConfirm = document.getElementById("toggleConfirm");
+  const strengthBar = document.getElementById("strengthBar");
+  const strengthText = document.getElementById("strengthText");
+  const passwordError = document.getElementById("passwordError");
+  const confirmError = document.getElementById("confirmError");
+
+  // Hiển thị / ẩn mật khẩu
+  function toggleInputVisibility(input, icon) {
+    const type = input.getAttribute("type") === "password" ? "text" : "password";
+    input.setAttribute("type", type);
+    icon.classList.toggle("bi-eye");
+    icon.classList.toggle("bi-eye-slash");
+  }
+  togglePassword.addEventListener("click", () => toggleInputVisibility(password, togglePassword));
+  toggleConfirm.addEventListener("click", () => toggleInputVisibility(confirmPassword, toggleConfirm));
+
+  // Kiểm tra độ mạnh mật khẩu
+  password.addEventListener("input", () => {
+    const val = password.value;
+    let strength = 0;
+
+    if (val.length >= 8) strength++;
+    if (/[A-Z]/.test(val)) strength++;
+    if (/[0-9]/.test(val)) strength++;
+    if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+    const width = ["25%", "50%", "75%", "100%"][strength - 1] || "0%";
+    const colors = ["#dc3545", "#ffc107", "#0d6efd", "#198754"];
+    const texts = ["Yếu", "Trung bình", "Khá", "Mạnh"];
+
+    strengthBar.style.width = width;
+    strengthBar.style.backgroundColor = colors[strength - 1] || "transparent";
+    strengthText.textContent = strength ? `Độ mạnh: ${texts[strength - 1]}` : "";
+  });
+
+  // Xác thực form
+  function validateForm() {
+    const passVal = password.value.trim();
+    const confirmVal = confirmPassword.value.trim();
+    let valid = true;
+
+    if (passVal.length < 8) {
+      passwordError.style.display = "block";
+      valid = false;
+    } else {
+      passwordError.style.display = "none";
+    }
+
+    if (passVal !== confirmVal) {
+      confirmError.style.display = "block";
+      valid = false;
+    } else {
+      confirmError.style.display = "none";
+    }
+
+    return valid;
+  }
+</script>
+
 </body>
 </html>

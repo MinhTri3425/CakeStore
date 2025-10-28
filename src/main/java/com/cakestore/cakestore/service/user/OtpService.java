@@ -26,12 +26,24 @@ public class OtpService {
     private JavaMailSender mailSender;
 
     public String generateOtp(User user, OtpToken.Purpose purpose) {
+        Optional<OtpToken> latest = otpRepo.findTopByUserAndPurposeOrderByCreatedAtDesc(user, purpose);
+        if (latest.isPresent()) {
+            OtpToken oldToken = latest.get();
+            if (!oldToken.isExpired(LocalDateTime.now()) && !oldToken.isUsed()) {
+                System.out.println("⚠️ OTP vẫn còn hiệu lực, không gửi lại cho " + user.getEmail());
+                return oldToken.getCode();
+            }
+        }
+
         String code = String.format("%06d", new Random().nextInt(999999));
         OtpToken token = new OtpToken(user, code, purpose, LocalDateTime.now().plusMinutes(5));
         otpRepo.save(token);
+
         sendOtpEmail(user.getEmail(), code);
+        System.out.println("📤 Gửi OTP mới cho " + user.getEmail() + ": " + code);
         return code;
     }
+
 
     private void sendOtpEmail(String to, String code) {
         SimpleMailMessage msg = new SimpleMailMessage();

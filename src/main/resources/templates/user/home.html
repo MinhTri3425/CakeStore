@@ -1,94 +1,375 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="fragments/header :: layout(~{::body})">
-<body>
+<body style="background:#0b1220;color:#e5e7eb;font-family:'Inter',sans-serif;">
 
-<!-- BANNERS -->
-<div th:if="${banners != null and #lists.size(banners) > 0}" id="banner" class="carousel slide mb-4" data-bs-ride="carousel">
-  <div class="carousel-inner">
-    <div class="carousel-item"
-         th:each="b,iter : ${banners}"
-         th:classappend="${iter.index == 0} ? ' active' : ''">
-      <a th:if="${b.linkTo != null and !#strings.isEmpty(b.linkTo)}" th:href="${b.linkTo}">
-        <img class="d-block w-100 rounded" th:src="${b.imageUrl}" th:alt="${b.title}">
+<style>
+  :root {
+    --bg: #0b1220;
+    --card: #111827;
+    --border: rgba(148,163,184,.25);
+    --muted: #94a3b8;
+    --primary: #22c55e;
+    --secondary: #60a5fa;
+  }
+
+  .section-title {
+    font-weight: 700;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Banner */
+  .carousel-inner img {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    filter: invert(1) drop-shadow(0 0 5px rgba(255,255,255,.4));
+  }
+
+  /* ==== CATEGORY (chips scrollable) ==== */
+  .cat-wrap { margin: 1.25rem 0 2rem; position: relative; }
+  .cat-scroll {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    gap: 10px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(17,24,39,.55);
+    scrollbar-width: thin;
+  }
+  .cat-scroll::-webkit-scrollbar { height: 8px; }
+  .cat-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,.25); border-radius: 8px; }
+
+  .cat-chip {
+    scroll-snap-align: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(17,24,39,.7);
+    color: #e5e7eb;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+    white-space: nowrap;
+  }
+  .cat-chip:hover {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #0b1220;
+    box-shadow: 0 6px 18px rgba(34,197,94,.22);
+    transform: translateY(-1px);
+  }
+  .cat-chip .dot {
+    width: 6px; height: 6px; border-radius: 999px; background: #60a5fa; opacity: .9;
+  }
+  .cat-chip.active {
+    background: linear-gradient(135deg, rgba(34,197,94,.18), rgba(96,165,250,.18));
+    border-color: rgba(96,165,250,.45);
+    box-shadow: 0 0 0 1px rgba(96,165,250,.25) inset;
+  }
+
+  /* Product Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(34,197,94,.1), 0 0 0 1px rgba(96,165,250,.1);
+  }
+  .card-img-top {
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 1px solid var(--border);
+  }
+  .price {
+    font-weight: 700;
+    color: #a5f3fc;
+  }
+
+  /* Buttons (Chi tiết / Thêm giỏ...) */
+  .btn {
+    border-radius: 10px;
+    font-weight: 600;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    color: #0b1220;
+    font-weight: 700;
+    box-shadow: 0 3px 12px rgba(34,197,94,.2);
+  }
+  .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+
+  .btn-outline-secondary {
+    border-color: var(--border);
+    color: var(--muted);
+  }
+  .btn-outline-secondary:hover {
+    background: rgba(148,163,184,.15);
+    color: #e5e7eb;
+  }
+
+  /* ♥ favorite button unified shape */
+  .btn-like{
+    border-radius:8px;
+    width:40px;
+    height:40px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:600;
+    font-size:1rem;
+    line-height:1;
+    transition:all .18s;
+    box-shadow:0 10px 24px rgba(0,0,0,.6);
+  }
+
+  /* chưa yêu thích */
+  .btn-like.off{
+    border:2px solid rgba(239,68,68,.6);
+    background:rgba(239,68,68,.06);
+    color:#ff7777;
+  }
+  .btn-like.off:hover{
+    background:rgba(239,68,68,.16);
+    color:#fff;
+    box-shadow:0 0 8px rgba(239,68,68,.6),0 20px 40px rgba(0,0,0,.8);
+  }
+
+  /* đã yêu thích */
+  .btn-like.on{
+    border:2px solid rgba(239,68,68,1);
+    background:radial-gradient(circle at 30% 30%, rgba(239,68,68,.9), rgba(139,0,0,.9) 70%);
+    color:#fff;
+    box-shadow:0 0 8px rgba(239,68,68,.8),0 24px 40px rgba(0,0,0,.9);
+  }
+  .btn-like.on:hover{
+    filter:brightness(1.1);
+  }
+
+  /* Footer buttons align */
+  .card-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+  }
+  .card-footer form {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+  }
+  .card-footer .btn-outline-secondary,
+  .card-footer .btn-primary {
+    min-width: 100px;
+  }
+
+  hr { border-color: rgba(148,163,184,.2); }
+</style>
+
+<!-- ======= DANH MỤC (chips) ======= -->
+<section class="container mt-4">
+  <div class="cat-wrap">
+    <div class="cat-scroll">
+      <a class="cat-chip"
+         th:each="c : ${categories}"
+         th:href="@{'/category/' + ${c.slug}}"
+         th:classappend="${activeCategorySlug != null and activeCategorySlug == c.slug} ? ' active'">
+        <span class="dot"></span>
+        <span th:text="${c.name}">Danh mục</span>
       </a>
-      <img th:if="${b.linkTo == null or #strings.isEmpty(b.linkTo)}"
-           class="d-block w-100 rounded"
-           th:src="${b.imageUrl}" th:alt="${b.title}">
     </div>
   </div>
-</div>
+</section>
 
-<!-- TOP BÁN CHẠY -->
-<h3 class="mb-3">Bán chạy (&gt;10)</h3>
-<div class="row row-cols-2 row-cols-md-4 g-3">
-  <div class="col" th:each="p : ${topSelling}">
-    <div class="card h-100">
-      <!-- thumbnail / placeholder -->
-      <img th:if="${p.thumbnailUrl != null}" th:src="${p.thumbnailUrl}" class="card-img-top" alt="">
-      <img th:if="${p.thumbnailUrl == null}" th:src="@{/images/no-image.png}" class="card-img-top" alt="no image">
-
-      <div class="card-body">
-        <h6 class="card-title text-truncate" th:text="${p.name}">Tên bánh</h6>
-        <div class="price" th:text="${#numbers.formatDecimal(p.price,1,0)} + ' đ'">0 đ</div>
+<!-- ======= BANNER ======= -->
+<section class="container mb-4">
+  <div th:if="${banners != null and #lists.size(banners) > 0}"
+       id="banner"
+       class="carousel slide"
+       data-bs-ride="carousel">
+    <div class="carousel-inner">
+      <div class="carousel-item"
+           th:each="b,iter : ${banners}"
+           th:classappend="${iter.index == 0} ? ' active' : ''">
+        <a th:if="${b.linkTo != null}" th:href="${b.linkTo}">
+          <img class="d-block w-100"
+               th:src="${b.imageUrl}"
+               th:alt="${b.title}">
+        </a>
+        <img th:if="${b.linkTo == null}"
+             class="d-block w-100"
+             th:src="${b.imageUrl}"
+             th:alt="${b.title}">
       </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#banner" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#banner" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+  </div>
+</section>
 
-      <div class="card-footer d-flex gap-2">
-        <!-- ♥ -->
-        <form th:action="@{/fav/toggle}" method="post">
-          <input type="hidden" name="productId" th:value="${p.id}">
-          <button class="btn btn-sm"
-                  th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? ' btn-danger' : ' btn-outline-danger'">♥</button>
-        </form>
+<!-- ======= TOP BÁN CHẠY ======= -->
+<section class="container">
+  <h3 class="section-title">Bán chạy 🍰</h3>
 
-        <a th:href="@{'/product/' + ${p.id}}" class="btn btn-sm btn-outline-secondary w-50">Chi tiết</a>
+  <div class="row row-cols-2 row-cols-md-4 g-3">
+    <div class="col" th:each="p : ${topSelling}">
+      <div class="card h-100">
 
-        <form th:action="@{/cart/add}" method="post" class="w-50">
-          <input type="hidden" name="productId" th:value="${p.id}">
-          <button class="btn btn-sm btn-primary w-100">Thêm giỏ</button>
-        </form>
+        <!-- ảnh sản phẩm -->
+        <img th:if="${p.thumbnailUrl != null}"
+             th:src="${p.thumbnailUrl}"
+             class="card-img-top" alt="">
+        <img th:if="${p.thumbnailUrl == null}"
+             th:src="@{/images/no-image.png}"
+             class="card-img-top" alt="no image">
+
+        <!-- thông tin -->
+        <div class="card-body">
+          <h6 class="card-title text-truncate" th:text="${p.name}">Tên bánh</h6>
+          <div class="price"
+               th:text="${#numbers.formatDecimal(p.price,1,0)} + ' đ'">
+            0 đ
+          </div>
+        </div>
+
+        <!-- footer actions -->
+        <div class="card-footer">
+
+          <!-- ♥ nếu đã đăng nhập -->
+          <div th:if="${#authorization.expression('isAuthenticated()')}">
+            <form th:action="@{/fav/toggle}" method="post" class="m-0 p-0">
+              <input type="hidden" name="productId" th:value="${p.id}">
+              <input type="hidden"
+                     th:if="${_csrf!=null}"
+                     th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}">
+              <button type="submit"
+                      class="btn-like"
+                      th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? ' on' : ' off'"
+                      onclick="this.disabled=true;this.form.submit();">
+                ♥
+              </button>
+            </form>
+          </div>
+
+          <!-- ♥ nếu chưa đăng nhập -->
+          <div th:unless="${#authorization.expression('isAuthenticated()')}">
+            <a href="/auth/login"
+               class="btn-like off"
+               title="Đăng nhập để yêu thích">♥</a>
+          </div>
+
+          <!-- Chi tiết -->
+          <a th:href="@{'/product/' + ${p.id}}"
+             class="btn btn-sm btn-outline-secondary">
+            Chi tiết
+          </a>
+
+          <!-- Thêm giỏ -->
+          <form th:action="@{/cart/add}" method="post">
+            <input type="hidden"
+                   th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <input type="hidden" name="productId" th:value="${p.id}">
+            <button class="btn btn-sm btn-primary">Thêm giỏ</button>
+          </form>
+
+        </div>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<hr class="my-4">
+<!-- ======= VỪA XEM ======= -->
+<section class="container"
+         th:if="${recently != null and #lists.size(recently) > 0}">
+  <hr class="my-5">
+  <h4 class="section-title">Vừa xem gần đây</h4>
 
-<!-- DANH MỤC -->
-<h5>Danh mục</h5>
-<div class="d-flex flex-wrap gap-2">
-  <a class="btn btn-outline-dark btn-sm"
-     th:each="c: ${categories}"
-     th:text="${c.name}"
-     th:href="@{'/category/' + ${c.slug}}">Danh mục</a>
-</div>
-
-<!-- VỪA XEM -->
-<div th:if="${recently != null and #lists.size(recently) > 0}">
-  <hr class="my-4">
-  <h5>Vừa xem</h5>
   <div class="row row-cols-2 row-cols-md-5 g-3">
     <div class="col" th:each="rp : ${recently}">
       <div class="card h-100">
-        <img th:if="${rp.images != null and #lists.size(rp.images) > 0}" th:src="${rp.images[0].url}" class="card-img-top" alt="">
-        <img th:if="${rp.images == null or #lists.size(rp.images) == 0}" th:src="@{/images/no-image.png}" class="card-img-top" alt="no image">
+        <img th:if="${rp.images != null and #lists.size(rp.images) > 0}"
+             th:src="${rp.images[0].url}"
+             class="card-img-top" alt="">
+        <img th:if="${rp.images == null or #lists.size(rp.images) == 0}"
+             th:src="@{/images/no-image.png}"
+             class="card-img-top" alt="no image">
 
         <div class="card-body">
           <h6 class="card-title text-truncate" th:text="${rp.name}">Tên bánh</h6>
-          <div class="price" th:text="${#numbers.formatDecimal(rp.price,1,0)} + ' đ'">0 đ</div>
+          <div class="price"
+               th:text="${#numbers.formatDecimal(rp.price,1,0)} + ' đ'">
+            0 đ
+          </div>
         </div>
 
-        <div class="card-footer d-flex gap-2">
-          <form th:action="@{/fav/toggle}" method="post">
-            <input type="hidden" name="productId" th:value="${rp.id}">
-            <button class="btn btn-sm"
-                    th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, rp.id)} ? ' btn-danger' : ' btn-outline-danger'">♥</button>
-          </form>
-          <a th:href="@{'/product/' + ${rp.id}}" class="btn btn-sm btn-outline-secondary w-100">Xem lại</a>
+        <div class="card-footer">
+          <a th:href="@{'/product/' + ${rp.id}}"
+             class="btn btn-sm btn-outline-secondary w-100">
+            Xem lại
+          </a>
         </div>
       </div>
     </div>
   </div>
-</div>
+</section>
+
+<script>
+  // Drag scroll cho thanh danh mục (chỉ để mượt kiểu app mobile)
+  (function(){
+    const el = document.querySelector('.cat-scroll');
+    if(!el) return;
+    let isDown=false, startX=0, scrollLeft=0;
+    el.addEventListener('mousedown',e=>{
+      isDown=true;
+      startX=e.pageX-el.offsetLeft;
+      scrollLeft=el.scrollLeft;
+      el.style.cursor='grabbing';
+    });
+    window.addEventListener('mouseup',()=>{
+      isDown=false;
+      el.style.cursor='auto';
+    });
+    el.addEventListener('mouseleave',()=>{
+      isDown=false;
+      el.style.cursor='auto';
+    });
+    el.addEventListener('mousemove',e=>{
+      if(!isDown) return;
+      e.preventDefault();
+      const x = e.pageX-el.offsetLeft;
+      el.scrollLeft = scrollLeft - (x-startX);
+    });
+  })();
+</script>
 
 </body>
 </html>

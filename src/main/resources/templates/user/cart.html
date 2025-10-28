@@ -1,10 +1,131 @@
+<!-- templates/user/cart.html -->
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="fragments/header :: layout(~{::body})">
-<body>
+<body style="background:#0b1220;color:#e5e7eb;font-family:'Inter',sans-serif;">
+
+<style>
+  :root{
+    --bg:#0b1220; --card:#111827; --border:rgba(148,163,184,.25);
+    --muted:#94a3b8; --text:#e5e7eb; --primary:#22c55e; --secondary:#60a5fa;
+  }
+
+  h4{
+    font-weight:800;
+    color:#d1fae5;
+    margin:1rem 0;
+    text-shadow:0 0 10px rgba(34,197,94,.15);
+  }
+
+  /* ==== TABLE ==== */
+  .table{
+    --bs-table-bg: rgba(17,24,39,.65);
+    --bs-table-border-color: var(--border);
+    color: var(--text);
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 12px 30px rgba(2,6,23,.45);
+  }
+
+  .table thead th{
+    background:rgba(15,23,42,.9);
+    border-bottom:1px solid var(--border);
+    color:#f1f5f9;
+    font-weight:700;
+  }
+
+  .table tbody td{
+    color:#ffffff;
+    vertical-align:middle;
+    font-weight:500;
+  }
+
+  .table tbody tr:hover{
+    background: rgba(96,165,250,.08);
+    transition:.25s ease;
+  }
+
+  /* ==== INPUTS ==== */
+  .form-control{
+    background:rgba(15,23,42,.6);
+    border:1px solid var(--border);
+    color:#ffffff;
+    border-radius:12px;
+  }
+
+  .form-control::placeholder {
+    color:#ffffff;
+    opacity:0.8;
+  }
+
+  .form-control:focus{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 6px rgba(96,165,250,.25);
+    background:rgba(15,23,42,.85);
+    color:#ffffff;
+  }
+
+  /* ==== BUTTONS ==== */
+  .btn{ border-radius:12px; font-weight:600; }
+  .btn-outline-secondary{ border-color:var(--border); color:#cbd5e1; }
+  .btn-outline-secondary:hover{ background:rgba(148,163,184,.15); color:#fff; }
+  .btn-outline-danger{ border-color:rgba(239,68,68,.6); color:#ff7777; }
+  .btn-outline-danger:hover{ background:rgba(239,68,68,.16); color:#fff; }
+  .btn-outline-primary{ border-color:#60a5fa; color:#60a5fa; }
+  .btn-outline-primary:hover{ background:#60a5fa; color:#0b1220; }
+
+  .btn-primary{
+    background:linear-gradient(135deg, var(--primary), var(--secondary));
+    border:none;
+    color:#07131f;
+    font-weight:800;
+    box-shadow:0 6px 18px rgba(34,197,94,.25);
+    transition:transform .18s, filter .18s;
+  }
+
+  .btn-primary:hover{
+    transform:translateY(-1px);
+    filter:saturate(1.05);
+  }
+
+  .btn-link{
+    color:#93c5fd;
+    text-decoration:none;
+    font-weight:600;
+  }
+
+  .btn-link:hover{
+    text-decoration:underline;
+    color:#cde3ff;
+  }
+
+  /* ==== COUPON + SUMMARY ==== */
+  .coupon-note{ color:var(--muted); }
+
+  .summary{
+    background:rgba(17,24,39,.55);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:12px 16px;
+  }
+
+  .summary .total{
+    font-size:1.6rem;
+    font-weight:900;
+    background:linear-gradient(135deg,#a7f3d0,#93c5fd);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+</style>
+
 <h4>Giỏ hàng</h4>
 
 <div th:if="${#lists.isEmpty(cart.items())}">
-  <div class="alert alert-info">Giỏ hàng đang trống. <a href="/">Tiếp tục mua sắm</a></div>
+  <div class="alert alert-info"
+       style="background:rgba(59,130,246,.12); border:1px solid rgba(96,165,250,.4); color:#dbeafe;">
+    Giỏ hàng đang trống. <a href="/" class="link-light">Tiếp tục mua sắm</a>
+  </div>
 </div>
 
 <div th:unless="${#lists.isEmpty(cart.items())}">
@@ -22,59 +143,123 @@
     <tr th:each="l : ${cart.items()}">
       <td th:text="${l.name}">Tên SP</td>
       <td>
-        <form th:action="@{/cart/set-qty}" method="post" class="d-flex">
+        <form th:action="@{/cart/set-qty}" method="post" class="d-flex"
+              onsubmit="return cartUpdateOnce(this)">
+          <!-- CSRF token -->
+          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <input type="hidden" name="productId" th:value="${l.productId}">
-          <input type="number" name="qty" min="0" class="form-control form-control-sm" style="width:90px"
+          <input type="hidden" name="variantId" th:value="${l.variantId}">
+          <input type="number" name="qty" min="0"
+                 class="form-control form-control-sm" style="width:90px"
                  th:value="${l.qty}">
-          <button class="btn btn-sm btn-outline-secondary ms-2">Cập nhật</button>
+          <button type="submit" class="btn btn-sm btn-outline-secondary ms-2">Cập nhật</button>
         </form>
       </td>
       <td th:text="${#numbers.formatDecimal(l.unitPrice,1,0)} + ' đ'">0</td>
       <td th:text="${#numbers.formatDecimal(l.lineTotal(),1,0)} + ' đ'">0</td>
       <td>
-        <form th:action="@{/cart/remove}" method="post">
+        <form th:action="@{/cart/remove}" method="post"
+              onsubmit="return cartUpdateOnce(this)">
+          <!-- CSRF token -->
+          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <input type="hidden" name="productId" th:value="${l.productId}">
-          <button class="btn btn-sm btn-outline-danger">Xóa</button>
+          <input type="hidden" name="variantId" th:value="${l.variantId}">
+          <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
         </form>
       </td>
     </tr>
     </tbody>
   </table>
 
-  <!-- ÁP MÃ GIẢM GIÁ -->
-  <div class="row g-3 align-items-center">
+  <!-- ==== COUPON + TOTAL ==== -->
+  <div class="row g-3 align-items-start">
     <div class="col-md-6">
-      <form class="d-flex gap-2" th:action="@{/cart/apply-coupon}" method="post">
-        <input class="form-control" name="code" placeholder="Nhập mã giảm giá" th:value="${session.COUPON_CODE}">
-        <button class="btn btn-outline-primary">Áp dụng</button>
+      <form class="d-flex gap-2" th:action="@{/cart/apply-coupon}" method="post"
+            onsubmit="return cartUpdateOnce(this)">
+        <!-- CSRF token -->
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input class="form-control" name="code"
+               placeholder="Nhập mã giảm giá"
+               th:value="${session.COUPON_CODE}">
+        <button type="submit" class="btn btn-outline-primary">Áp dụng</button>
       </form>
-      <p class="text-muted mt-2" th:if="${session.COUPON_MSG != null}" th:text="${session.COUPON_MSG}"></p>
+      <p class="coupon-note mt-2"
+         th:if="${session.COUPON_MSG != null}"
+         th:text="${session.COUPON_MSG}"></p>
     </div>
+
     <div class="col-md-6 text-end">
-      <div>Tạm tính: <b th:text="${#numbers.formatDecimal(cart.subtotal(),1,0)} + ' đ'">0</b></div>
-      <div th:if="${session.COUPON_VALUE != null}">
-        Giảm: <b class="text-success" th:text="${#numbers.formatDecimal(session.COUPON_VALUE,1,0)} + ' đ'">0</b>
-      </div>
-      <div class="h5 mt-2">
-        Tổng: <span th:text="${
-            #numbers.formatDecimal(
-              cart.subtotal().subtract(session.COUPON_VALUE?:T(java.math.BigDecimal).ZERO),1,0)
-          } + ' đ'">0</span>
+      <div class="summary d-inline-block text-start">
+        <div>Tạm tính: <b th:text="${#numbers.formatDecimal(cart.subtotal(),1,0)} + ' đ'">0</b></div>
+        <div th:if="${session.COUPON_VALUE != null}">
+          Giảm: <b class="text-success"
+                  th:text="${#numbers.formatDecimal(session.COUPON_VALUE,1,0)} + ' đ'">0</b>
+        </div>
+        <div class="mt-2">
+          Tổng:
+          <span class="total"
+                th:text="${
+                  #numbers.formatDecimal(
+                    cart.subtotal().subtract(session.COUPON_VALUE?:T(java.math.BigDecimal).ZERO),1,0)
+                } + ' đ'">0</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <hr>
+  <hr style="border-color:rgba(148,163,184,.2)">
 
-  <div class="d-flex justify-content-between">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
     <a class="btn btn-link" href="/">⬅ Tiếp tục mua sắm</a>
-    <div>
-      <form th:action="@{/cart/clear}" method="post" class="d-inline">
-        <button class="btn btn-outline-secondary">Xóa giỏ</button>
+    <div class="d-flex gap-2">
+      <form th:action="@{/cart/clear}" method="post" class="d-inline"
+            onsubmit="return cartUpdateOnce(this)">
+        <!-- CSRF token -->
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="btn btn-outline-secondary">Xóa giỏ</button>
       </form>
-      <a class="btn btn-primary ms-2" href="#">Thanh toán (demo)</a>
+      <a class="btn btn-primary" href="#">Thanh toán (demo)</a>
     </div>
   </div>
 </div>
+
+<!-- ==== Chặn double-submit & Enter spam ==== -->
+<script>
+  function cartUpdateOnce(form) {
+    if (form.dataset.busy === '1') return false;     // đã submit -> chặn
+    form.dataset.busy = '1';
+    const btn = form.querySelector('button[type=submit]');
+    if (btn) {
+      btn.disabled = true;
+      // Đổi text nhẹ cho biết đang chạy (optional)
+      const t = btn.textContent;
+      btn.dataset.prev = t;
+      btn.textContent = 'Đang xử lý...';
+      // 5s tự khôi phục trong trường hợp điều hướng bị chặn (optional)
+      setTimeout(() => {
+        if (!document.hidden) { // nếu chưa điều hướng
+          form.dataset.busy = '0';
+          btn.disabled = false;
+          btn.textContent = btn.dataset.prev || t;
+        }
+      }, 5000);
+    }
+    return true;
+  }
+
+  // Chặn Enter trong input number tạo submit lặp
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      const form = e.target?.closest('form[action$="/cart/set-qty"]');
+      if (form) {
+        e.preventDefault();
+        if (form.dataset.busy === '1') return;
+        form.requestSubmit?.();
+      }
+    }
+  });
+</script>
+
 </body>
 </html>
+    

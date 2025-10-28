@@ -1,44 +1,81 @@
 package com.cakestore.cakestore.config;
 
+import com.cakestore.cakestore.security.CartAuthenticationSuccessHandler;
+import com.cakestore.cakestore.service.AuthService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                // TẮT CSRF cho đơn giản (form POST không cần token).
-                // Khi bạn làm đăng nhập/đăng ký thật, cân nhắc bật lại và thêm token CSRF vào
-                // form.
-                .csrf(csrf -> csrf.disable())
+        private static final String ADMIN = "ADMIN";
+        private static final String STAFF = "STAFF";
 
-                // Cho phép TẤT CẢ endpoints (không yêu cầu đăng nhập)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/**",
-                                "/h2-console/**" // nếu bạn dùng H2 dev
-                        ).permitAll()
-                        .anyRequest().permitAll())
+        private final UserDetailsService userDetailsService;
+        private final CartAuthenticationSuccessHandler successHandler;
 
-                // H2 console (tuỳ bạn có dùng hay không)
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+        public SecurityConfig(AuthService authService,
+                        CartAuthenticationSuccessHandler successHandler) {
+                this.userDetailsService = authService;
+                this.successHandler = successHandler;
+        }
 
-        // Nếu sau này bạn thêm JWT filter:
-        // http.addFilterBefore(jwtAuthFilter,
-        // UsernamePasswordAuthenticationFilter.class);
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder(10);
+        }
 
-        return http.build();
-    }
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                // Dev nhanh: tắt CSRF (khi deploy production, nên bật lại)
+                                .csrf(AbstractHttpConfigurer::disable)
 
-    // Để sẵn cho tương lai (mã hoá mật khẩu khi bạn làm đăng ký/đăng nhập)
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+                                .authorizeHttpRequests(auth -> auth
+                                                // --- PUBLIC (guest xem tự do) ---
+                                                .requestMatchers(
+                                                                "/", "/home",
+                                                                "/search", "/category/**", "/product/**",
+                                                                "/cart/**", "/fav/**",
+                                                                "/register", "/forgot",
+                                                                "/api/branches",
+                                                                "/branch/select",
+                                                                "/css/**", "/js/**", "/images/**", "/uploads/**",
+                                                                "/webjars/**",
+                                                                "/h2-console/**")
+                                                .permitAll()
+
+                                                // --- API & trang nội bộ ---
+                                                .requestMatchers("/api/admin/**", "/admin/**").hasRole(ADMIN)
+                                                .requestMatchers("/api/staff/**", "/staff/**").hasAnyRole(ADMIN, STAFF)
+
+                                                // --- Những đường dẫn khác (nếu có) ---
+                                                .anyRequest().authenticated())
+
+                                // --- FORM LOGIN ---
+                                .formLogin(form -> form
+                                                .loginPage("/auth/login")
+                                                .loginProcessingUrl("/perform_login")
+                                                .successHandler(successHandler)
+                                                .failureUrl("/auth/login?error=true")
+                                                .permitAll())
+                                .logout(l -> l
+                                                .logoutUrl("/perform_logout")
+                                                .logoutSuccessUrl("/")
+                                                .permitAll())
+                                .userDetailsService(userDetailsService)
+
+                                // Cho H2 console (nếu đang dùng)
+                                .headers(h -> h.frameOptions(f -> f.sameOrigin()));
+
+                return http.build();
+        }
 }

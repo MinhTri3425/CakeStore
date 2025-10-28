@@ -6,14 +6,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class CartSessionService {
 
-    public static final String CART_KEY = "SESSION_CART";
+    private static final String CART_SESSION_KEY = "SESSION_CART";
 
     public SessionCart getCart(HttpSession session) {
-        var cart = (SessionCart) session.getAttribute(CART_KEY);
-        if (cart == null) {
-            cart = new SessionCart();
-            session.setAttribute(CART_KEY, cart);
-        }
+        Object o = session.getAttribute(CART_SESSION_KEY);
+        if (o instanceof SessionCart)
+            return (SessionCart) o;
+        SessionCart cart = new SessionCart();
+        session.setAttribute(CART_SESSION_KEY, cart);
         return cart;
+    }
+
+    public void saveCart(HttpSession session, SessionCart cart) {
+        session.setAttribute(CART_SESSION_KEY, cart);
+    }
+
+    public void clearCart(HttpSession session) {
+        session.removeAttribute(CART_SESSION_KEY);
     }
 }

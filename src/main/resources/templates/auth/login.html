@@ -1,10 +1,212 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Login • Split Card</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --fg: #e5e7eb;
+      --muted:#94a3b8;
+      --primary:#22c55e;
+      --secondary:#60a5fa;
+      --card:#0f172a;
+      --border: rgba(148,163,184,.25);
+      --ring: rgba(96,165,250,.45);
+      --input-h: 48px;
+      --icon-size: 18px;
+      --icon-space: 44px;
+    }
+    *{ box-sizing:border-box }
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--fg);
+      background:
+        radial-gradient(60rem 40rem at 15% 10%, rgba(34,197,94,.15), transparent 40%),
+        radial-gradient(60rem 40rem at 85% 20%, rgba(96,165,250,.18), transparent 40%),
+        #0b1220;
+      display:grid; place-items:center;
+    }
+    .shell{ width:min(980px,94vw) }
+
+    /* ==== Brand ==== */
+    .brand-chip {
+      display:inline-flex; align-items:center; gap:10px; padding:10px 14px;
+      border-radius:14px; background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(96,165,250,.2));
+      border:1px solid var(--border); backdrop-filter:blur(10px);
+      box-shadow:0 10px 30px rgba(2,6,23,.5); margin-bottom:24px;
+    }
+    .brand-logo {
+      width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-weight:800;
+      color:white;background:linear-gradient(135deg,#22c55e,#60a5fa); box-shadow:0 6px 16px rgba(34,197,94,.35);
+    }
+    .brand-text .title{ font-weight:800 }
+    .brand-text .sub{ font-size:.85rem; color:var(--muted) }
+
+    /* ==== Card Layout ==== */
+    .card {
+      display:grid; grid-template-columns:1.2fr 1fr;
+      background:rgba(15,23,42,.9);
+      border:1px solid var(--border); border-radius:18px; overflow:hidden;
+      box-shadow:0 18px 50px rgba(2,6,23,.6);
+    }
+    .panel-hero {
+      padding:42px; min-height:520px;
+      display:flex; flex-direction:column; justify-content:space-between;
+      background:
+        radial-gradient(40rem 20rem at -10% -10%,rgba(34,197,94,.35),transparent 50%),
+        radial-gradient(40rem 20rem at 120% -10%,rgba(96,165,250,.35),transparent 50%);
+    }
+    .hero-title{ font-size:32px; font-weight:800; letter-spacing:.3px }
+    .hero-sub{ color:var(--muted); margin-top:8px; max-width:36ch }
+    .hero-illustration{
+      width:100%; aspect-ratio:4/3; border-radius:16px; border:1px solid var(--border);
+      background:radial-gradient(120% 90% at 0% 0%,rgba(34,197,94,.25),transparent 40%),
+                 radial-gradient(120% 90% at 100% 20%,rgba(99,102,241,.25),transparent 40%),
+                 linear-gradient(135deg,#0ea5e9 0%,#22c55e 100%);
+      box-shadow:inset 0 0 80px rgba(2,6,23,.45);
+    }
+
+    .panel-form { padding:42px; background:rgba(2,6,23,.4); backdrop-filter:blur(12px) }
+    .panel-form h2{ margin:0 0 6px; font-size:24px; font-weight:800; color:#d1fae5 }
+    .panel-form .muted{ color:var(--muted); margin-bottom:22px }
+
+    /* ==== Input Fields ==== */
+    .form-group{ margin-bottom:16px }
+    label{ display:block; font-size:.9rem; color:var(--muted); margin-bottom:8px }
+
+    .with-icon { position:relative }
+    .control {
+      width:100%; height:var(--input-h);
+      border-radius:12px; border:1px solid var(--border);
+      background:rgba(15,23,42,.65); color:var(--fg);
+      padding:0 var(--icon-space); /* reserve both sides */
+      outline:none; transition:border-color .2s, box-shadow .2s, background .2s;
+      caret-color:var(--secondary);
+    }
+    .control::placeholder{ color:#94a3b8 }
+    .control:focus{
+      border-color:var(--secondary); box-shadow:0 0 0 6px var(--ring); background:rgba(15,23,42,.85);
+    }
+
+    /* icon perfectly centered */
+    .with-icon .icon {
+      position:absolute; left:0; top:23px; bottom:0;
+      display:grid; place-items:center; width:44px; pointer-events:none;
+    }
+    .with-icon .icon svg{
+      width:var(--icon-size); height:var(--icon-size); color:#93c5fd;
+    }
+
+    .eye-btn {
+      position:absolute; right:0; top:23px; bottom:0;
+      width:44px; display:grid; place-items:center;
+      background:transparent; border:none; color:#93c5fd;
+      cursor:pointer; opacity:.8; transition:opacity .15s;
+    }
+    .eye-btn:hover{ opacity:1 }
+
+    .row-inline{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:12px 0 18px }
+    .remember{ display:flex; align-items:center; gap:8px; color:var(--muted); font-size:.9rem }
+
+    .btn {
+      width:100%; height:var(--input-h); border-radius:12px; border:1px solid transparent; font-weight:700;
+      background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#07131f; cursor:pointer;
+      box-shadow:0 10px 28px rgba(34,197,94,.25), inset 0 0 0 1px rgba(255,255,255,.25);
+    }
+    .btn:active{ transform:translateY(1px) }
+
+    .footer{ text-align:center; margin-top:18px; color:var(--muted); font-size:.85rem }
+
+    @media(max-width:860px){
+      .card{ grid-template-columns:1fr }
+      .panel-hero{ min-height:auto }
+      .panel-form{ padding-top:28px }
+    }
+  </style>
 </head>
 <body>
+  <div class="shell">
+    <div class="brand-chip">
+      <div class="brand-logo">A</div>
+      <div class="brand-text">
+        <div class="title">Admin Portal</div>
+        <div class="sub">Staff • Manager • Admin</div>
+      </div>
+    </div>
 
+    <section class="card">
+      <aside class="panel-hero">
+        <div>
+          <div class="hero-title">Welcom to CakeShop</div>
+          <div class="hero-sub">
+            Không chỉ là bánh, mà là nghệ thuật từ bột và bơ.</div>
+        </div>
+        <div class="hero-illustration"></div>
+      </aside>
+
+      <section class="panel-form">
+        <h2>Đăng nhập</h2>
+        <div class="muted">Đưa trải nghiệm lên hàng đầu</div>
+
+        <div th:if="${param.error}" style="color:#fecaca; margin-bottom:12px;">Tên đăng nhập hoặc mật khẩu không hợp lệ.</div>
+        <div th:if="${param.logout}" style="color:#bbf7d0; margin-bottom:12px;">Bạn đã đăng xuất thành công.</div>
+
+        <form th:action="@{/perform_login}" method="post">
+          <div class="form-group with-icon">
+            <label for="username">Email / Username</label>
+            <span class="icon">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5L4 8V6l8 5 8-5v2z"/>
+              </svg>
+            </span>
+            <input id="username" name="username" type="email" class="control" placeholder="name@company.com" required />
+          </div>
+
+          <div class="form-group with-icon">
+            <label for="password">Mật khẩu</label>
+            <span class="icon">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1a5 5 0 0 0-5 5v3H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V10a1 1 0 0 0-1-1h-2V6a5 5 0 0 0-5-5zm-3 8V6a3 3 0 1 1 6 0v3H9z"/>
+              </svg>
+            </span>
+            <input id="password" name="password" type="password" class="control" placeholder="••••••••" required />
+            <button type="button" class="eye-btn" aria-label="Hiện/ẩn mật khẩu" onclick="togglePwd()">
+              <svg id="eyeIcon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="row-inline">
+            <label class="remember">
+              <input type="checkbox" name="remember-me" style="accent-color:#60a5fa" />
+              Ghi nhớ đăng nhập
+            </label>
+            <a href="#" style="color:#93c5fd; text-decoration:none;">Quên mật khẩu?</a>
+          </div>
+
+          <button class="btn" type="submit">Đăng nhập</button>
+        </form>
+
+        <div class="footer">© <span th:text="${#dates.format(#dates.createNow(),'yyyy')}">2025</span> • Admin Console</div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    function togglePwd(){
+      const input=document.getElementById('password');
+      const eye=document.getElementById('eyeIcon');
+      const isText=input.type==='text';
+      input.type=isText?'password':'text';
+      eye.innerHTML=isText
+        ?'<path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>'
+        :'<path d="M1.3 3.7 3 2l19 19-1.7 1.7-3.1-3.1A12.5 12.5 0 0 1 12 19C5 19 2 12 2 12s1.9-3.6 5-5.8l-1.7-1.7zM12 5c7 0 10 7 10 7a17.7 17.7 0 0 1-4.1 5.1l-2-2a5 5 0 0 0-6-6l-2-2C9.1 5.3 10.5 5 12 5z"/>';
+    }
+  </script>
 </body>
 </html>

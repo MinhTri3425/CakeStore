@@ -1,4 +1,4 @@
-// service/FavoriteSessionService.java
+// src/main/java/com/cakestore/cakestore/service/user/FavoriteSessionService.java
 package com.cakestore.cakestore.service.user;
 
 import jakarta.servlet.http.HttpSession;
@@ -21,5 +21,13 @@ public class FavoriteSessionService {
             s.setAttribute(KEY, set);
         }
         return set;
+    }
+
+    /** Ghi đè toàn bộ session set theo DB (an toàn copy) */
+    public void replace(HttpSession s, Collection<Long> ids) {
+        LinkedHashSet<Long> copy = new LinkedHashSet<>();
+        if (ids != null)
+            copy.addAll(ids);
+        s.setAttribute(KEY, copy);
     }
 }

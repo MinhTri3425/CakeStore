@@ -69,7 +69,7 @@
 							<td th:text="${product.id}">1</td>
 							<td>
 								<img th:if="${#sets.size(product.images) > 0}"
-									th:src="${#sets.toList(product.images).get(0).url}"
+									th:src="${#lists.toList(product.images).get(0).url}"
 									alt="Ảnh sản phẩm"
 									style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />
 								<span th:unless="${#sets.size(product.images) > 0}" class="text-muted small">N/A</span>

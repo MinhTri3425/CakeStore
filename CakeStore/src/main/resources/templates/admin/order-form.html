@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tạo Đơn hàng Mới</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div th:replace="~{admin/home :: sidebar}"></div>
+            
+            <div class="col-md-9">
+                <h2 class="mb-4">Tạo Đơn hàng Mới (Nhập thủ công)</h2>
+
+                <form th:action="@{/admin/orders}" method="post">
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">1. Thông tin Cơ bản</div>
+                        <div class="card-body">
+                            
+                            <div class="mb-3">
+                                <label for="branch" class="form-label">Chi nhánh Xử lý</label>
+                                <select name="branchId" class="form-select" id="branch" required>
+                                    <option value="">-- Chọn Chi nhánh --</option>
+                                    <option th:each="branch : ${branches}" 
+                                            th:value="${branch.id}" 
+                                            th:text="${branch.code} + ' - ' + ${branch.name}"></option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="paymentMethod" class="form-label">Phương thức Thanh toán</label>
+                                <select name="paymentMethod" class="form-select" id="paymentMethod">
+                                    <option value="">-- Chọn Phương thức --</option>
+                                    <option th:each="method : ${paymentMethods}" 
+                                            th:value="${method}" 
+                                            th:text="${method}"></option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="note" class="form-label">Ghi chú Đơn hàng (Nội bộ/Gửi khách)</label>
+                                <textarea name="note" class="form-control" id="note" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">2. Khách hàng & Giao hàng</div>
+                        <div class="card-body">
+                            <h6 class="text-info">Thông tin Khách hàng (Bắt buộc)</h6>
+                            <div class="row">
+                                <div class="mb-3 col-md-6">
+                                    <label for="customerEmail" class="form-label">Email Khách hàng</label>
+                                    <input type="email" name="customerEmail" class="form-control" id="customerEmail" placeholder="Bắt buộc" required>
+                                </div>
+                                <div class="mb-3 col-md-6">
+                                    <label for="fullName" class="form-label">Tên đầy đủ</label>
+                                    <input type="text" name="fullName" class="form-control" id="fullName" required>
+                                </div>
+                            </div>
+                            
+                            <h6 class="mt-3 text-info">Địa chỉ Giao hàng (Bắt buộc)</h6>
+                            <div class="row">
+                                <div class="mb-3 col-md-6">
+                                    <label for="phone" class="form-label">SĐT</label>
+                                    <input type="tel" name="phone" class="form-control" id="phone" required>
+                                </div>
+                                <div class="mb-3 col-md-6">
+                                    <label for="city" class="form-label">Thành phố</label>
+                                    <input type="text" name="city" class="form-control" id="city" required>
+                                </div>
+                                <div class="mb-3 col-md-12">
+                                    <label for="line1" class="form-label">Số nhà, Tên đường</label>
+                                    <input type="text" name="line1" class="form-control" id="line1" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            3. Sản phẩm
+                            <button type="button" id="addItemBtn" class="btn btn-sm btn-success">Thêm Sản phẩm</button>
+                        </div>
+                        <div class="card-body" id="items-container">
+                            <div class="alert alert-warning" id="no-item-warning" style="display: block;">Vui lòng thêm ít nhất một sản phẩm.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                         <div class="card-body text-end">
+                             <h4 class="text-success">Tổng tiền (Dự kiến): <span id="totalAmount">0 VND</span></h4>
+                             <input type="hidden" name="total" id="totalInput" value="0.00">
+                         </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-lg">Tạo Đơn hàng</button>
+                    <a th:href="@{/admin/orders}" class="btn btn-secondary btn-lg">Hủy</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+        // Lấy danh sách sản phẩm từ Controller
+        const productList = /*[[${products}]]*/ []; 
+        
+        // Các biến DOM
+        const itemsContainer = document.getElementById('items-container');
+        const totalAmountSpan = document.getElementById('totalAmount');
+        const totalInput = document.getElementById('totalInput');
+
+        // Hàm format tiền tệ
+        function formatVND(amount) {
+             return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        }
+
+        // Hàm tạo một dòng sản phẩm mới
+        function createItemRow() {
+            // Dòng debug: Kiểm tra xem hàm có được gọi không
+            console.log("Hàm createItemRow() đã được gọi. Đang tạo dòng sản phẩm mới...");
+            console.log("Dữ liệu sản phẩm:", productList);
+
+            // Tạo options cho select box
+            const productOptions = (productList || []).map(p => {
+                const id = p?.id ?? '';
+                // [FIX] Đảm bảo price là số, nếu null/undefined thì dùng 0
+                const price = parseFloat(p?.price) || 0; 
+                const name = p?.name ?? 'Sản phẩm không rõ tên';
+                const sku = p?.sku ? `(SKU: ${p.sku})` : '';
+                
+                return `<option value="${id}" data-price="${price}" data-name="${name} ${sku}">${name} (${formatVND(price)})</option>`;
+            }).join('');
+
+            const itemRow = document.createElement('div');
+            itemRow.classList.add('item-row', 'row', 'mb-3', 'p-2', 'border-bottom');
+            
+            itemRow.innerHTML = `
+                <div class="col-md-5 mb-2">
+                    <label class="form-label small">Sản phẩm</label>
+                    <select name="productId" class="form-select product-select" required>
+                        <option value="" data-price="0" data-name="">-- Chọn sản phẩm --</option>
+                        ${productOptions}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label small">Đơn giá</label>
+                    <input type="number" name="unitPrice" class="form-control unit-price" value="0" min="0" step="0.01" readonly required>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label small">SL</label>
+                    <input type="number" name="quantity" class="form-control quantity-input" value="1" min="1" required>
+                </div>
+                <div class="col-md-2 mb-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-danger w-100 remove-item-btn">Xóa</button>
+                    <input type="hidden" name="nameSnapshot" class="name-snapshot" value="">
+                </div>
+            `;
+            
+            // Hook up event listeners
+            itemRow.querySelector('.product-select').addEventListener('change', updateItemPrice);
+            itemRow.querySelector('.quantity-input').addEventListener('input', calculateTotal);
+            itemRow.querySelector('.remove-item-btn').addEventListener('click', removeItem);
+
+            itemsContainer.appendChild(itemRow);
+            
+            // Cập nhật cảnh báo
+            document.getElementById('no-item-warning').style.display = 'none';
+        }
+
+        // Hàm cập nhật giá và tên khi chọn sản phẩm
+        function updateItemPrice(event) {
+            const select = event.target;
+            const row = select.closest('.item-row');
+            const selectedOption = select.options[select.selectedIndex];
+            
+            const priceInput = row.querySelector('.unit-price');
+            const nameSnapshotInput = row.querySelector('.name-snapshot');
+            const quantityInput = row.querySelector('.quantity-input');
+            
+            const price = parseFloat(selectedOption.dataset.price) || 0;
+            const nameSnapshot = selectedOption.dataset.name || selectedOption.textContent.trim(); 
+
+            priceInput.value = price.toFixed(2);
+            nameSnapshotInput.value = nameSnapshot;
+            
+            if (price > 0) {
+                 quantityInput.focus();
+            }
+            calculateTotal();
+        }
+
+        // Hàm xóa dòng sản phẩm
+        function removeItem(event) {
+            const row = event.target.closest('.item-row');
+            row.remove();
+            calculateTotal();
+            
+            if (itemsContainer.querySelectorAll('.item-row').length === 0) {
+                 document.getElementById('no-item-warning').style.display = 'block';
+            }
+        }
+
+        // Hàm tính toán tổng tiền
+        function calculateTotal() {
+            let grandTotal = 0;
+            itemsContainer.querySelectorAll('.item-row').forEach(row => {
+                const price = parseFloat(row.querySelector('.unit-price').value) || 0;
+                const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
+                grandTotal += price * quantity;
+            });
+
+            // Cập nhật hiển thị tổng tiền và input hidden
+            totalAmountSpan.textContent = formatVND(grandTotal);
+            totalInput.value = grandTotal.toFixed(2); 
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+             // [DEBUG] Log dữ liệu nhận được
+             console.log("Dữ liệu sản phẩm nhận được từ Controller:", productList);
+             
+             // Gắn sự kiện click cho nút "Thêm Sản phẩm"
+             document.getElementById('addItemBtn').addEventListener('click', createItemRow);
+            
+             // Khởi tạo: Tính tổng tiền lần đầu
+             calculateTotal();
+        });
+
+    /*]]>*/
+    </script>
+</body>
+</html>

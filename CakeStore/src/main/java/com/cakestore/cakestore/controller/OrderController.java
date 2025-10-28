@@ -1,23 +1,38 @@
+// CakeStore/src/main/java/com/cakestore/cakestore/controller/OrderController.java
 package com.cakestore.cakestore.controller;
 
 import com.cakestore.cakestore.entity.Order;
+import com.cakestore.cakestore.entity.OrderItem; 
+import com.cakestore.cakestore.entity.Product; 
 import com.cakestore.cakestore.entity.Order.OrderStatus;
+import com.cakestore.cakestore.entity.Order.PaymentMethod;
 import com.cakestore.cakestore.service.OrderService;
+import com.cakestore.cakestore.service.BranchService; 
+import com.cakestore.cakestore.service.ProductService; 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort; // Đã có import Sort
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.math.BigDecimal;
+import java.util.ArrayList; 
+import java.util.List; 
 
 @Controller
 @RequestMapping({"/admin/orders", "/staff/orders"})
 public class OrderController {
 
     private final OrderService orderService;
+    private final BranchService branchService; 
+    private final ProductService productService; 
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, BranchService branchService, ProductService productService) { 
         this.orderService = orderService;
+        this.branchService = branchService;
+        this.productService = productService;
     }
 
     /**
@@ -34,8 +49,92 @@ public class OrderController {
         model.addAttribute("allStatuses", OrderStatus.values());
         model.addAttribute("currentStatus", status);
 
-        // TODO: Tạo template admin/orders.html
         return "admin/orders"; 
+    }
+
+    /**
+     * GET /admin/orders/new - Form tạo đơn hàng mới
+     */
+    @GetMapping("/new")
+    public String showCreateForm(Model model) {
+        model.addAttribute("order", new Order());
+        model.addAttribute("branches", branchService.findAllActive());
+        model.addAttribute("paymentMethods", PaymentMethod.values());
+        
+        // [FIX] Khắc phục lỗi UnknownPathException: 'asc'
+        // Sử dụng cú pháp Sort.by(Direction, properties) thay vì Sort.by(properties)
+        model.addAttribute("products", 
+            productService.findPaginatedProducts(null, null, 
+                PageRequest.of(0, 1000, Sort.by(Sort.Direction.ASC, "name")) // ĐÃ SỬA CHỖ NÀY
+            ).getContent());
+
+        return "admin/order-form"; 
+    }
+
+    /**
+     * POST /admin/orders - Xử lý tạo đơn hàng thủ công
+     */
+    @PostMapping
+    public String createOrder(@RequestParam Long branchId,
+                              @RequestParam String customerEmail,
+                              @RequestParam String fullName,
+                              @RequestParam String phone,
+                              @RequestParam String line1,
+                              @RequestParam String city,
+                              @RequestParam PaymentMethod paymentMethod,
+                              @RequestParam(required = false) String note,
+                              
+                              // Các tham số List từ Form (Item rows)
+                              @RequestParam(required = false) List<Long> productId,
+                              @RequestParam(required = false) List<Integer> quantity,
+                              @RequestParam(required = false) List<BigDecimal> unitPrice,
+                              @RequestParam(required = false) List<String> nameSnapshot,
+                              
+                              @RequestParam BigDecimal total,
+                              RedirectAttributes ra) {
+
+        // Validate cơ bản
+        if (productId == null || productId.isEmpty()) {
+            ra.addFlashAttribute("error", "Đơn hàng phải có ít nhất một sản phẩm.");
+            return "redirect:/admin/orders/new";
+        }
+        
+        // Map List raw data thành List OrderItem (để truyền vào Service)
+        List<OrderItem> rawItems = new ArrayList<>();
+        for (int i = 0; i < productId.size(); i++) {
+            // Kiểm tra xem có phải là dòng trống không
+            if (productId.get(i) != null) {
+                // Tạo OrderItem tạm thời chứa data thô
+                OrderItem tempItem = new OrderItem();
+                
+                // Khắc phục lỗi Constructor Product(Long)
+                Product dummyProduct = new Product();
+                dummyProduct.setId(productId.get(i));
+                tempItem.setProduct(dummyProduct); 
+                
+                tempItem.setQuantity(quantity.get(i));
+                tempItem.setUnitPrice(unitPrice.get(i));
+                tempItem.setNameSnapshot(nameSnapshot.get(i));
+                rawItems.add(tempItem);
+            }
+        }
+        
+        try {
+            Order newOrder = orderService.createManualOrder(
+                branchId, customerEmail, fullName, phone, line1, city, 
+                paymentMethod, note, rawItems, total
+            );
+            ra.addFlashAttribute("success", "Đã tạo đơn hàng mới thành công! Mã: #" + newOrder.getId());
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", "Lỗi tạo đơn hàng: " + e.getMessage());
+            return "redirect:/admin/orders/new";
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Lỗi hệ thống khi tạo đơn hàng.");
+            e.printStackTrace();
+            return "redirect:/admin/orders/new";
+        }
+        
+        return "redirect:/admin/orders";
     }
 
     /**

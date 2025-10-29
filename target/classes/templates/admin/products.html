@@ -51,40 +51,58 @@
 					</div>
 				</form>
 
-				<table class="table table-bordered table-striped">
+				<table class="table table-bordered table-striped align-middle">
 					<thead class="table-dark">
 						<tr>
 							<th>ID</th>
+							<th style="width: 80px">Ảnh</th>
 							<th>SKU</th>
 							<th>Tên sản phẩm</th>
 							<th>Giá bán</th>
 							<th>Danh mục</th>
 							<th>Trạng thái</th>
-							<th>Thao tác</th>
+							<th style="width: 250px">Thao tác</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr th:each="product : ${products}">
 							<td th:text="${product.id}">1</td>
+							<td>
+								<img th:if="${#sets.size(product.images) > 0}"
+									th:src="${#lists.toList(product.images).get(0).url}"
+									alt="Ảnh sản phẩm"
+									style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />
+								<span th:unless="${#sets.size(product.images) > 0}" class="text-muted small">N/A</span>
+							</td>
 							<td th:text="${product.sku}">CAKE-001</td>
 							<td th:text="${product.name}">Bánh Kem Dâu Tây</td>
 							<td
 								th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' VND'">150.000
 								VND</td>
 							<td th:text="${product.category.name}">Bánh Lạnh</td>
-							<td><span th:if="${product.status == 1}"
-								class="badge bg-success">Active</span> <span
-								th:unless="${product.status == 1}" class="badge bg-warning">Hidden</span>
+							<td>
+								<span th:if="${product.status == 1}" class="badge bg-success">Active</span> 
+								<span th:unless="${product.status == 1}" class="badge bg-warning">Hidden</span>
 							</td>
-							<td><a
-								th:href="@{/admin/products/{id}/edit(id=${product.id})}"
-								class="btn btn-sm btn-info">Sửa</a>
+							<td class="d-flex gap-2">
+								<a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
+									class="btn btn-sm btn-info">Sửa</a>
+								
+								<form th:action="@{/admin/products/{id}/toggle(id=${product.id})}"
+									method="post" style="display: inline;"
+									onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái của sản phẩm này?');">
+									<button type="submit" class="btn btn-sm"
+										th:classappend="${product.status == 1 ? 'btn-secondary' : 'btn-success'}"
+										th:text="${product.status == 1 ? 'Disable' : 'Enable'}">Disable</button>
+								</form>
+								
 								<form
 									th:action="@{/admin/products/{id}/delete(id=${product.id})}"
 									method="post" style="display: inline;"
 									onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
 									<button type="submit" class="btn btn-sm btn-danger">Xóa</button>
-								</form></td>
+								</form>
+							</td>
 						</tr>
 					</tbody>
 				</table>

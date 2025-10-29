@@ -1,3 +1,4 @@
+// CakeStore/src/main/java/com/cakestore/cakestore/service/impl/ProductServiceImpl.java
 package com.cakestore.cakestore.service.impl;
 
 import com.cakestore.cakestore.entity.Product;
@@ -18,6 +19,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true) // THÊM DÒNG NÀY ĐỂ GIỮ SESSION MỞ CHO VIỆC TẢI ẢNH (LAZY/EAGER)
     public Page<Product> findPaginatedProducts(String keyword, Long categoryId, Pageable pageable) {
         if (keyword == null) {
             keyword = "";

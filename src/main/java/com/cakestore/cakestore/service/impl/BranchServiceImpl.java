@@ -2,7 +2,6 @@ package com.cakestore.cakestore.service.impl;
 
 import com.cakestore.cakestore.entity.Branch;
 import com.cakestore.cakestore.repository.BranchRepository;
-import com.cakestore.cakestore.repository.CouponRepository;
 import com.cakestore.cakestore.service.BranchService;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -12,11 +11,9 @@ import java.util.stream.Collectors;
 public class BranchServiceImpl implements BranchService {
 
     private final BranchRepository branchRepository;
-    private final CouponRepository couponRepository;
 
-    public BranchServiceImpl(BranchRepository branchRepository, CouponRepository couponRepository) {
+    public BranchServiceImpl(BranchRepository branchRepository) {
         this.branchRepository = branchRepository;
-        this.couponRepository = couponRepository;
     }
 
     @Override
@@ -39,10 +36,7 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     public void deleteById(Long id) {
-        // ⚠️ Kiểm tra trước khi xóa
-        if (couponRepository.existsByBranch_Id(id)) {
-            throw new IllegalStateException("Không thể xóa chi nhánh vì còn mã giảm giá liên kết.");
-        }
+        // Nên cân nhắc đổi sang set isActive = false thay vì xóa cứng
         branchRepository.deleteById(id);
     }
     

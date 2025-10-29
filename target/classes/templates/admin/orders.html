@@ -22,6 +22,10 @@
 				<div th:if="${error}" class="alert alert-danger" role="alert">
 					<span th:text="${error}"></span>
 				</div>
+                
+                <div class="d-flex justify-content-end mb-3">
+                    <a th:href="@{/admin/orders/new}" class="btn btn-primary">Tạo Đơn hàng Mới</a>
+                </div>
 
 				<div class="mb-4">
 					<ul class="nav nav-tabs">
@@ -68,7 +72,10 @@
 				</table>
 				<div th:if="${orderPage.empty}" class="alert alert-info">Không
 					có đơn hàng nào được tìm thấy.</div>
-
+				
+                <nav th:if="${orderPage.totalPages > 0}">
+                    </nav>
+                
 			</div>
 		</div>
 	</div>

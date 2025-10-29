@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Tồn kho & Nhập hàng</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div th:replace="~{admin/home :: sidebar}"></div>
+            
+            <div class="col-md-9">
+                <h2 class="mb-4">Quản lý Tồn kho & Nhập hàng</h2>
+
+                <div th:if="${success}" class="alert alert-success" role="alert"><span th:text="${success}"></span></div>
+                <div th:if="${error}" class="alert alert-danger" role="alert"><span th:text="${error}"></span></div>
+
+                <form th:action="@{/admin/inventory}" method="get" class="mb-4">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <input type="search" name="keyword" th:value="${keyword}"
+                                class="form-control" placeholder="Tìm kiếm theo Tên SP/SKU">
+                        </div>
+
+                        <div class="col-auto">
+                            <select name="branchId" class="form-select">
+                                <option value="" th:selected="${selectedBranchId == null}">-- Lọc theo Chi nhánh --</option>
+                                <option th:each="branch : ${branches}" th:value="${branch.id}"
+                                    th:text="${branch.code} + ' - ' + ${branch.name}"
+                                    th:selected="${selectedBranchId != null and selectedBranchId == branch.id}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-info">Áp dụng</button>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <a th:href="@{/admin/inventory/new}" class="btn btn-primary">Nhập kho/Cập nhật tồn</a>
+                        </div>
+                    </div>
+                </form>
+
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Sản phẩm (SKU)</th>
+                            <th>Chi nhánh</th>
+                            <th>Tồn kho (Quantity)</th>
+                            <th>Đã giữ chỗ (Reserved)</th>
+                            <th>Khả dụng (Available)</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="inventory : ${inventories}">
+                            <td th:text="${inventory.id}">1</td>
+                            <td>
+                                <span th:text="${inventory.product.name}">Bánh Kem Dâu</span>
+                                (<span th:text="${inventory.product.sku}">CAKE-001</span>)
+                            </td>
+                            <td th:text="${inventory.branch.code}">HCM-Q1</td>
+                            <td th:text="${inventory.quantity}">100</td>
+                            <td th:text="${inventory.reserved}" class="text-danger">5</td>
+                            <td><span class="fw-bold" th:text="${inventory.available}">95</span></td>
+                            <td>
+                                <a th:href="@{/admin/inventory/{id}/edit(id=${inventory.id})}" class="btn btn-sm btn-info">Sửa</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div th:if="${#lists.isEmpty(inventories)}" class="alert alert-info">Không có dữ liệu tồn kho nào được tìm thấy.</div>
+
+                <nav th:if="${inventoryPage.totalPages > 0}">
+                    <ul class="pagination">
+                        <li class="page-item" th:classappend="${inventoryPage.first ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/inventory(page=${currentPage - 1}, size=${inventoryPage.size}, branchId=${selectedBranchId}, keyword=${keyword})}">Previous</a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, inventoryPage.totalPages - 1)}"
+                            th:classappend="${i == currentPage ? 'active' : ''}">
+                            <a class="page-link" th:text="${i + 1}" th:href="@{/admin/inventory(page=${i}, size=${inventoryPage.size}, branchId=${selectedBranchId}, keyword=${keyword})}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${inventoryPage.last ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/inventory(page=${currentPage + 1}, size=${inventoryPage.size}, branchId=${selectedBranchId}, keyword=${keyword})}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

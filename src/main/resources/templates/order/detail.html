@@ -292,27 +292,56 @@
   <div class="section-card address-block">
     <div class="status-label">THÔNG TIN GIAO HÀNG</div>
 
-    <div class="addr-line" th:text="${order.address != null ? order.address.fullName : '---'}">
+    <!-- Tên người nhận -->
+    <div class="addr-line"
+         th:text="${#strings.isEmpty(order.shippingFullName) ? '---' : order.shippingFullName}">
       Nguyễn Thị Kem
     </div>
 
+    <!-- SĐT -->
     <div class="addr-line">
-      <span th:text="${order.address != null ? order.address.phone : '---'}">
+      <span th:text="${#strings.isEmpty(order.shippingPhone) ? '---' : order.shippingPhone}">
         0909xxxxxx
       </span>
     </div>
 
+    <!-- Địa chỉ đầy đủ -->
     <div class="addr-line" style="margin-top:.4rem;">
-      <span th:if="${order.address != null}"
-            th:text="${order.address.fullAddress()}">
-        123 Lê Lợi, Phường 4, Quận 3, TP.HCM
+      <span th:if="${!#strings.isEmpty(order.shippingLine1)
+                   or !#strings.isEmpty(order.shippingWard)
+                   or !#strings.isEmpty(order.shippingDistrict)
+                   or !#strings.isEmpty(order.shippingCity)}">
+
+        <span th:text="${order.shippingLine1}">123 Lê Lợi</span>
+        <span th:if="${!#strings.isEmpty(order.shippingWard)}">,
+          <span th:text="${order.shippingWard}">Phường 4</span>
+        </span>
+        <span th:if="${!#strings.isEmpty(order.shippingDistrict)}">,
+          <span th:text="${order.shippingDistrict}">Quận 3</span>
+        </span>
+        <span th:if="${!#strings.isEmpty(order.shippingCity)}">,
+          <span th:text="${order.shippingCity}">TP.HCM</span>
+        </span>
+
       </span>
-      <span th:if="${order.address == null}"
-            style="color:#94a3b8;">(Không có địa chỉ)</span>
+
+      <span th:if="${#strings.isEmpty(order.shippingLine1)
+                   and #strings.isEmpty(order.shippingWard)
+                   and #strings.isEmpty(order.shippingDistrict)
+                   and #strings.isEmpty(order.shippingCity)}"
+            style="color:#94a3b8;">
+        (Không có địa chỉ)
+      </span>
     </div>
 
-    <div class="addr-meta" th:if="${order.address != null}">
-      Sẽ giao tới địa chỉ trên (theo info lúc đặt hàng).
+    <div class="addr-meta"
+         th:if="${!#strings.isEmpty(order.shippingFullName)
+                or !#strings.isEmpty(order.shippingPhone)
+                or !#strings.isEmpty(order.shippingLine1)
+                or !#strings.isEmpty(order.shippingWard)
+                or !#strings.isEmpty(order.shippingDistrict)
+                or !#strings.isEmpty(order.shippingCity)}">
+      Địa chỉ đã chốt lúc đặt hàng (không bị thay đổi sau này).
     </div>
   </div>
 
@@ -323,12 +352,12 @@
     <div class="table-responsive mt-2">
       <table class="items-table">
         <thead>
-          <tr>
-            <th>Sản phẩm</th>
-            <th style="width:80px;">SL</th>
-            <th style="width:140px;">Đơn giá</th>
-            <th style="width:140px;">Thành tiền</th>
-          </tr>
+        <tr>
+          <th>Sản phẩm</th>
+          <th style="width:80px;">SL</th>
+          <th style="width:140px;">Đơn giá</th>
+          <th style="width:140px;">Thành tiền</th>
+        </tr>
         </thead>
         <tbody>
         <tr th:each="it : ${order.items}">

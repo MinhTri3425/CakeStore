@@ -1,0 +1,294 @@
+<!-- templates/account/address-edit.html -->
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/header :: layout(~{::body})">
+<body style="background:#0b1220;color:#e5e7eb;font-family:'Inter',sans-serif;">
+
+<style>
+  :root{
+    --bg:#0b1220;
+    --card:#111827;
+    --border:rgba(148,163,184,.25);
+    --muted:#94a3b8;
+    --text:#e5e7eb;
+    --primary:#22c55e;
+    --secondary:#60a5fa;
+  }
+
+  h4{
+    font-weight:800;
+    color:#d1fae5;
+    margin:1rem 0 1.5rem;
+    text-shadow:0 0 10px rgba(34,197,94,.15);
+  }
+
+  .card-box{
+    background:rgba(17,24,39,.55);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:0 16px 40px rgba(0,0,0,.6);
+    padding:16px 20px;
+    color:var(--text);
+    max-width:600px;
+    margin:0 auto 60px;
+  }
+
+  .section-label{
+    font-size:.8rem;
+    font-weight:600;
+    color:#94a3b8;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    margin-bottom:1rem;
+  }
+
+  .form-label{
+    font-size:.8rem;
+    font-weight:600;
+    color:#94a3b8;
+    margin-bottom:4px;
+  }
+
+  .form-control{
+    background:rgba(15,23,42,.6);
+    border:1px solid var(--border);
+    color:#fff;
+    border-radius:12px;
+    font-size:.9rem;
+    line-height:1.4;
+  }
+  .form-control::placeholder{
+    color:#fff;
+    opacity:.6;
+  }
+  .form-control:focus{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 6px rgba(96,165,250,.25);
+    background:rgba(15,23,42,.85);
+    color:#fff;
+  }
+
+  .row-2col{
+    display:flex;
+    flex-wrap:wrap;
+    gap:1rem;
+  }
+  .row-2col .col{
+    flex:1 1 0;
+    min-width:0;
+  }
+
+  .default-flag-box{
+    background:rgba(34,197,94,.08);
+    border:1px solid rgba(34,197,94,.4);
+    border-radius:12px;
+    color:#a7f3d0;
+    font-size:.8rem;
+    line-height:1.4;
+    padding:.75rem 1rem;
+    margin-top:1rem;
+    display:flex;
+    align-items:flex-start;
+    gap:.5rem;
+  }
+  .default-flag-box input[type="checkbox"]{
+    margin-top:.2rem;
+    cursor:pointer;
+  }
+  .default-flag-box label{
+    cursor:pointer;
+    font-weight:600;
+    color:#d1fae5;
+  }
+  .default-hint{
+    color:#94a3b8;
+    font-weight:500;
+    font-size:.75rem;
+    line-height:1.4;
+    margin-top:.25rem;
+  }
+
+  .error-box{
+    background:rgba(239,68,68,.12);
+    border:1px solid rgba(239,68,68,.5);
+    color:#fecaca;
+    border-radius:12px;
+    font-size:.8rem;
+    font-weight:500;
+    line-height:1.4;
+    padding:.75rem 1rem;
+    margin-bottom:1rem;
+  }
+
+  .btn-row{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    align-items:center;
+    gap:1rem;
+    margin-top:2rem;
+  }
+
+  .btn-primary{
+    background:linear-gradient(135deg,var(--primary),var(--secondary));
+    border:none;
+    color:#07131f;
+    font-weight:800;
+    box-shadow:0 6px 18px rgba(34,197,94,.25);
+    border-radius:12px;
+    padding:.6rem 1rem;
+    min-width:140px;
+    text-align:center;
+    font-size:.9rem;
+    cursor:pointer;
+    transition:filter .16s, transform .16s;
+  }
+  .btn-primary:hover{
+    filter:saturate(1.05);
+    transform:translateY(-1px);
+  }
+
+  .back-link{
+    font-size:.8rem;
+    color:#93c5fd;
+    text-decoration:none;
+    font-weight:600;
+  }
+  .back-link:hover{
+    text-decoration:underline;
+    color:#cde3ff;
+  }
+
+  /* chỉ để badge "MẶC ĐỊNH" ở góc form nếu addr.isDefault */
+  .addr-default-pill{
+    background:#22c55e;
+    color:#0b1220;
+    border-radius:6px;
+    font-size:.7rem;
+    font-weight:700;
+    padding:4px 8px;
+    line-height:1.2;
+    white-space:nowrap;
+    display:inline-block;
+    margin-left:.5rem;
+  }
+
+</style>
+
+<div class="container" style="max-width:700px;padding:16px 16px 60px;">
+
+  <h4>
+    Sửa địa chỉ giao hàng
+    <span th:if="${addr.default}" class="addr-default-pill">MẶC ĐỊNH</span>
+  </h4>
+
+  <div class="card-box">
+
+    <div th:if="${err != null}"
+         class="error-box"
+         th:text="${err}">
+      Có lỗi xảy ra khi cập nhật địa chỉ.
+    </div>
+
+    <div class="section-label">Thông tin người nhận</div>
+
+    <form th:action="@{'/account/address/update/' + ${addr.id}}"
+          method="post"
+          style="margin:0;">
+      <input type="hidden" th:if="${_csrf != null}"
+             th:name="${_csrf.parameterName}"
+             th:value="${_csrf.token}" />
+
+      <div class="mb-3">
+        <div class="form-label">Họ tên người nhận</div>
+        <input class="form-control"
+               type="text"
+               name="fullName"
+               placeholder="Ví dụ: Trần Thị Bánh Kem"
+               th:value="${addr.fullName}"
+               required />
+      </div>
+
+      <div class="mb-3">
+        <div class="form-label">Số điện thoại</div>
+        <input class="form-control"
+               type="text"
+               name="phone"
+               placeholder="Ví dụ: 0901234567"
+               th:value="${addr.phone}"
+               required />
+      </div>
+
+      <div class="section-label" style="margin-top:2rem;">Địa chỉ giao</div>
+
+      <div class="mb-3">
+        <div class="form-label">Địa chỉ cụ thể</div>
+        <input class="form-control"
+               type="text"
+               name="line1"
+               placeholder="Số nhà, đường..."
+               th:value="${addr.line1}"
+               required />
+      </div>
+
+      <div class="row-2col">
+        <div class="col">
+          <div class="mb-3">
+            <div class="form-label">Phường/Xã</div>
+            <input class="form-control"
+                   type="text"
+                   name="ward"
+                   placeholder="Phường 5"
+                   th:value="${addr.ward}" />
+          </div>
+        </div>
+        <div class="col">
+          <div class="mb-3">
+            <div class="form-label">Quận/Huyện</div>
+            <input class="form-control"
+                   type="text"
+                   name="district"
+                   placeholder="Quận 3"
+                   th:value="${addr.district}" />
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <div class="form-label">Tỉnh / Thành phố</div>
+        <input class="form-control"
+               type="text"
+               name="city"
+               placeholder="TP.HCM"
+               th:value="${addr.city}"
+               required />
+      </div>
+
+      <div class="default-flag-box">
+        <input type="checkbox"
+               id="setDefaultBox"
+               name="setDefault"
+               th:checked="${addr.default} ? true : false" />
+        <div style="flex:1;">
+          <label for="setDefaultBox">Đặt làm địa chỉ mặc định</label>
+          <div class="default-hint">
+            Địa chỉ mặc định sẽ được tự động chọn ở bước thanh toán.
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <a class="back-link" th:href="@{/account/address}">
+          ⬅ Quay lại Sổ địa chỉ
+        </a>
+
+        <button class="btn-primary" type="submit">
+          Lưu thay đổi
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

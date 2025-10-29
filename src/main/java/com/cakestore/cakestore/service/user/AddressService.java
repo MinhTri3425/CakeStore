@@ -44,6 +44,7 @@ public class AddressService {
             String ward,
             String district,
             String city) {
+
         User u = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -64,6 +65,59 @@ public class AddressService {
         userRepository.save(u);
 
         return a;
+    }
+
+    /**
+     * Cập nhật 1 địa chỉ có sẵn.
+     * - Chỉ update địa chỉ thuộc userId này.
+     * - Cho phép đổi nội dung (fullName, phone, line1, ward, district, city).
+     * - allowDefault == true => ép địa chỉ này thành default và gỡ default ở chỗ
+     * khác.
+     * allowDefault == false/null => giữ nguyên cờ default hiện tại, không đụng.
+     */
+    @Transactional
+    public Address updateAddress(
+            Long userId,
+            Long addressId,
+            String fullName,
+            String phone,
+            String line1,
+            String ward,
+            String district,
+            String city,
+            Boolean allowDefault // có muốn set địa chỉ này làm default luôn không
+    ) {
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        // tìm đúng address thuộc về user
+        Address target = u.getAddresses()
+                .stream()
+                .filter(addr -> addr.getId().equals(addressId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Address not found for this user"));
+
+        // update fields nội dung
+        target.setFullName(fullName);
+        target.setPhone(phone);
+        target.setLine1(line1);
+        target.setWard(ward);
+        target.setDistrict(district);
+        target.setCity(city);
+
+        // xử lý default nếu caller yêu cầu
+        if (Boolean.TRUE.equals(allowDefault)) {
+            // tắt default cho tất cả
+            for (Address addr : u.getAddresses()) {
+                addr.setDefault(false);
+            }
+            // bật cho cái đang sửa
+            target.setDefault(true);
+        }
+        // nếu allowDefault = false hoặc null -> không động đến cờ default hiện tại
+
+        userRepository.save(u);
+        return target;
     }
 
     @Transactional

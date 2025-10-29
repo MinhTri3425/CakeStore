@@ -1,8 +1,14 @@
 package com.cakestore.cakestore.controller.user;
 
 import com.cakestore.cakestore.entity.*;
-import com.cakestore.cakestore.repository.user.*;
 import com.cakestore.cakestore.repository.UserRepository;
+import com.cakestore.cakestore.repository.user.AddressRepository;
+import com.cakestore.cakestore.repository.user.BranchInventoryRepository;
+import com.cakestore.cakestore.repository.user.BranchRepository;
+import com.cakestore.cakestore.repository.user.CouponRepository;
+import com.cakestore.cakestore.repository.user.OrderRepository;
+import com.cakestore.cakestore.repository.user.ProductRepository;
+import com.cakestore.cakestore.repository.user.ProductVariantRepository;
 import com.cakestore.cakestore.service.user.CartSessionService;
 import com.cakestore.cakestore.service.user.SessionCart;
 import com.cakestore.cakestore.service.user.SessionCart.Line;
@@ -17,8 +23,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -32,6 +40,9 @@ public class CheckoutController {
     private final ProductRepository productRepo;
     private final ProductVariantRepository productVariantRepo;
     private final BranchInventoryRepository branchInventoryRepo;
+
+    // để đọc lại coupon ở bước checkout
+    private final CouponRepository couponRepo;
 
     // ===================== GET /checkout =====================
     @GetMapping("/checkout")
@@ -55,10 +66,10 @@ public class CheckoutController {
             return "redirect:/cart";
         }
 
-        // đồng bộ branchId vào session (session -> nếu null thì lấy cookie)
-        syncBranchFromCookieIfNeeded(request, session);
+        // đồng bộ session.activeBranchId từ cookie BRANCH_ID (cookie thắng)
+        syncBranchFromCookie(request, session);
 
-        // build model attribute cho view
+        // build model attribute cho view (lúc GET)
         prepareCheckoutModel(session, currentUser, cart, model);
 
         return "checkout/checkout"; // templates/checkout/checkout.html
@@ -90,7 +101,7 @@ public class CheckoutController {
             return "redirect:/cart";
         }
 
-        // branch giao hàng: sau GET thì session đã có (hoặc user cố tình skip)
+        // branch giao hàng lấy từ session (đã sync ở GET bằng cookie)
         Long activeBranchId = (Long) session.getAttribute("activeBranchId");
         Branch branch = (activeBranchId != null)
                 ? branchRepo.findById(activeBranchId).orElse(null)
@@ -112,29 +123,33 @@ public class CheckoutController {
             return "checkout/checkout";
         }
 
-        // snapshot địa chỉ lúc đặt (để đơn giữ nguyên kể cả user đổi sau đó)
-        Address shipAddr = new Address();
-        shipAddr.setUser(currentUser);
-        shipAddr.setFullName(chosen.getFullName());
-        shipAddr.setPhone(chosen.getPhone());
-        shipAddr.setLine1(chosen.getLine1());
-        shipAddr.setWard(chosen.getWard());
-        shipAddr.setDistrict(chosen.getDistrict());
-        shipAddr.setCity(chosen.getCity());
-        shipAddr.setDefault(false);
-        addressRepo.save(shipAddr);
-
-        // tính tiền final từ server
+        // ======== TÍNH TIỀN FINAL (CÓ COUPON) ========
         BigDecimal subtotal = calcSubTotal(cart);
-        BigDecimal discount = calcDiscount(cart, currentUser);
-        BigDecimal shippingFee = calcShippingFee(branch, cart);
+
+        // đọc coupon từ session và verify lại (branch, hạn dùng, minSubtotal,...)
+        CouponCalcResult coup = computeCouponEffect(session, branch, subtotal);
+
+        BigDecimal discount = coup.discount(); // tiền giảm trên hàng
+        BigDecimal shippingFee = coup.shippingFeeOverride() != null
+                ? coup.shippingFeeOverride()
+                : calcShippingFeeDefault(branch, cart); // nếu coupon free ship thì 0
+
         BigDecimal total = subtotal
                 .subtract(discount)
                 .add(shippingFee);
 
-        // build Order
+        if (total.compareTo(BigDecimal.ZERO) < 0) {
+            total = BigDecimal.ZERO;
+        }
+
+        // ================== BUILD ORDER ==================
         Order order = new Order(currentUser, branch);
-        order.setAddress(shipAddr);
+
+        // nếu DB cho phép AddressId NULL, KHÔNG setAddress để tránh phụ thuộc động
+        // order.setAddress(chosen);
+
+        // snapshot cố định địa chỉ giao hàng
+        order.snapshotShippingFrom(chosen);
 
         order.setSubtotal(subtotal);
         order.setDiscount(discount);
@@ -191,27 +206,31 @@ public class CheckoutController {
         // lưu order (cascade OrderItem)
         orderRepo.save(order);
 
-        // clear cart
+        // clear cart trong session
         cartSvc.clearCart(session);
+
+        // clear coupon sau khi dùng, để không reuse cho đơn tiếp theo
+        session.removeAttribute("COUPON_CODE");
+        session.removeAttribute("COUPON_VALUE");
+        session.removeAttribute("COUPON_MSG");
 
         // redirect sang chi tiết đơn
         return "redirect:/orders/" + order.getId();
     }
 
-    // ===================== helper =====================
+    // ===================== helpers =====================
 
     /**
-     * Đọc BRANCH_ID từ cookie và bỏ vào session.activeBranchId nếu session chưa có.
-     * Dùng trong GET /checkout để "đồng bộ state đầu phiên".
+     * Đồng bộ chi nhánh vào session.activeBranchId dựa trên cookie BRANCH_ID.
+     * Cookie luôn thắng. Nếu cookie không có -> xoá session.activeBranchId.
+     * Kết quả: checkout luôn hiển thị đúng chi nhánh user vừa chọn ở header.
      */
-    private void syncBranchFromCookieIfNeeded(HttpServletRequest request, HttpSession session) {
-        Long activeBranchId = (Long) session.getAttribute("activeBranchId");
-        if (activeBranchId != null) {
-            return; // session đã có -> thôi khỏi đọc cookie
-        }
+    private void syncBranchFromCookie(HttpServletRequest request, HttpSession session) {
         Long cookieBranchId = readBranchIdFromCookie(request);
         if (cookieBranchId != null) {
             session.setAttribute("activeBranchId", cookieBranchId);
+        } else {
+            session.removeAttribute("activeBranchId");
         }
     }
 
@@ -236,14 +255,15 @@ public class CheckoutController {
     }
 
     /**
-     * Chuẩn bị mọi attribute mà checkout.html cần.
-     * Dùng cho cả GET (sau sync cookie -> session) và POST khi có lỗi.
+     * Chuẩn bị attribute cho checkout.html (GET /checkout và POST lỗi).
+     * Đã tính giảm giá + phí ship (bao gồm freeship nếu coupon loại SHIPPING_OFF).
      */
     private void prepareCheckoutModel(
             HttpSession session,
             User currentUser,
             SessionCart cart,
             Model model) {
+
         // branch hiện tại trong session
         Long activeBranchId = (Long) session.getAttribute("activeBranchId");
         Branch activeBranch = null;
@@ -252,11 +272,22 @@ public class CheckoutController {
         }
 
         BigDecimal subtotal = calcSubTotal(cart);
-        BigDecimal discount = calcDiscount(cart, currentUser);
-        BigDecimal shippingFee = calcShippingFee(activeBranch, cart);
+
+        // áp coupon (giảm hàng + freeship nếu có)
+        CouponCalcResult coup = computeCouponEffect(session, activeBranch, subtotal);
+
+        BigDecimal discount = coup.discount();
+        BigDecimal shippingFee = coup.shippingFeeOverride() != null
+                ? coup.shippingFeeOverride()
+                : calcShippingFeeDefault(activeBranch, cart);
+
         BigDecimal total = subtotal
                 .subtract(discount)
                 .add(shippingFee);
+
+        if (total.compareTo(BigDecimal.ZERO) < 0) {
+            total = BigDecimal.ZERO;
+        }
 
         // danh sách địa chỉ user, default lên trước
         List<Address> addrList = addressRepo
@@ -276,7 +307,132 @@ public class CheckoutController {
         model.addAttribute("activeBranch", activeBranch);
         model.addAttribute("addresses", addrList);
         model.addAttribute("selectedAddressId", selectedAddressId);
+
+        // show lại coupon/code/message nếu muốn
+        model.addAttribute("couponMsg", session.getAttribute("COUPON_MSG"));
+        model.addAttribute("couponCode", session.getAttribute("COUPON_CODE"));
     }
+
+    // ---------- Coupon logic tái sử dụng ở checkout ----------
+
+    /**
+     * Kết quả tính toán coupon ở bước checkout:
+     * - discount: tiền giảm trên hàng
+     * - shippingFeeOverride: nếu != null thì dùng giá trị này làm phí ship
+     * (ví dụ 0 cho freeship)
+     */
+    private record CouponCalcResult(BigDecimal discount, BigDecimal shippingFeeOverride) {
+    }
+
+    /**
+     * Đọc coupon từ session (COUPON_CODE) rồi validate lại với:
+     * - branch hiện tại
+     * - thời gian hiệu lực
+     * - minSubtotal
+     *
+     * Nếu hợp lệ:
+     * - Nếu coupon là % hoặc AMOUNT => trả discount tương ứng, shippingFeeOverride
+     * = null
+     * - Nếu coupon là SHIPPING_OFF => discount = 0, shippingFeeOverride = 0
+     *
+     * Nếu không hợp lệ hoặc không có mã => discount = 0, shippingFeeOverride = null
+     */
+    private CouponCalcResult computeCouponEffect(
+            HttpSession session,
+            Branch currentBranch,
+            BigDecimal subtotalRaw) {
+
+        BigDecimal subtotal = (subtotalRaw == null) ? BigDecimal.ZERO : subtotalRaw;
+
+        Object codeObj = session.getAttribute("COUPON_CODE");
+        if (!(codeObj instanceof String couponCode) || couponCode.isBlank()) {
+            return new CouponCalcResult(BigDecimal.ZERO, null);
+        }
+
+        Optional<Coupon> couponOpt = couponRepo.findByCodeIgnoreCaseAndIsActiveTrue(couponCode);
+        if (couponOpt.isEmpty()) {
+            return new CouponCalcResult(BigDecimal.ZERO, null);
+        }
+        Coupon coupon = couponOpt.get();
+
+        // check thời gian / lượt
+        LocalDateTime now = LocalDateTime.now();
+        if (!coupon.isActiveNow(now)) {
+            return new CouponCalcResult(BigDecimal.ZERO, null);
+        }
+
+        // check ràng buộc chi nhánh
+        if (coupon.getBranch() != null) {
+            if (currentBranch == null ||
+                    !coupon.getBranch().getId().equals(currentBranch.getId())) {
+                return new CouponCalcResult(BigDecimal.ZERO, null);
+            }
+        }
+
+        // check minSubtotal
+        if (coupon.getMinSubtotal() != null &&
+                subtotal.compareTo(coupon.getMinSubtotal()) < 0) {
+            return new CouponCalcResult(BigDecimal.ZERO, null);
+        }
+
+        // tính theo loại coupon
+        switch (coupon.getType()) {
+            case PERCENT: {
+                BigDecimal percent = safe(coupon.getValue());
+                BigDecimal raw = subtotal
+                        .multiply(percent)
+                        .divide(BigDecimal.valueOf(100));
+
+                // cap maxDiscount nếu có
+                if (coupon.getMaxDiscount() != null &&
+                        raw.compareTo(coupon.getMaxDiscount()) > 0) {
+                    raw = coupon.getMaxDiscount();
+                }
+                if (raw.compareTo(BigDecimal.ZERO) < 0) {
+                    raw = BigDecimal.ZERO;
+                }
+                // không giảm quá subtotal
+                if (raw.compareTo(subtotal) > 0) {
+                    raw = subtotal;
+                }
+
+                return new CouponCalcResult(raw, null);
+            }
+
+            case AMOUNT: {
+                BigDecimal flat = safe(coupon.getValue());
+                if (flat.compareTo(BigDecimal.ZERO) < 0) {
+                    flat = BigDecimal.ZERO;
+                }
+                // cap theo maxDiscount nếu có
+                if (coupon.getMaxDiscount() != null &&
+                        flat.compareTo(coupon.getMaxDiscount()) > 0) {
+                    flat = coupon.getMaxDiscount();
+                }
+                // không giảm quá subtotal
+                if (flat.compareTo(subtotal) > 0) {
+                    flat = subtotal;
+                }
+
+                return new CouponCalcResult(flat, null);
+            }
+
+            case SHIPPING_OFF: {
+                // freeship: discount hàng = 0
+                // báo phí ship = 0
+                return new CouponCalcResult(BigDecimal.ZERO, BigDecimal.ZERO);
+            }
+
+            default:
+                return new CouponCalcResult(BigDecimal.ZERO, null);
+        }
+    }
+
+    private BigDecimal safe(BigDecimal x) {
+        return x == null ? BigDecimal.ZERO : x;
+    }
+
+    // ---------- tiền cơ bản ----------
 
     private BigDecimal calcSubTotal(SessionCart cart) {
         if (cart == null)
@@ -285,14 +441,12 @@ public class CheckoutController {
         return x == null ? BigDecimal.ZERO : x;
     }
 
-    private BigDecimal calcShippingFee(Branch branch, SessionCart cart) {
+    /**
+     * phí ship mặc định (nếu coupon không free ship)
+     */
+    private BigDecimal calcShippingFeeDefault(Branch branch, SessionCart cart) {
         // TODO: tính phí ship động theo branch / khoảng cách
         return new BigDecimal("20000");
-    }
-
-    private BigDecimal calcDiscount(SessionCart cart, User user) {
-        // TODO: voucher/loyalty/coupon
-        return BigDecimal.ZERO;
     }
 
     private Order.PaymentMethod safePaymentMethod(String raw) {

@@ -13,11 +13,15 @@
       </h2>
 
       <p style="color:#94a3b8;font-size:.9rem;">
-        Chọn địa chỉ mặc định, hoặc thêm địa chỉ mới để dùng lúc thanh toán.
+        Chọn địa chỉ mặc định, chỉnh sửa hoặc thêm địa chỉ mới để dùng lúc thanh toán.
       </p>
 
+      <!-- flash messages -->
       <div th:if="${msg=='added'}" style="color:#22c55e;font-size:.9rem;">
         Đã thêm địa chỉ 👌
+      </div>
+      <div th:if="${msg=='updated'}" style="color:#22c55e;font-size:.9rem;">
+        Đã cập nhật địa chỉ ✔
       </div>
       <div th:if="${msg=='default_ok'}" style="color:#22c55e;font-size:.9rem;">
         Đã đặt làm địa chỉ mặc định ✔
@@ -29,6 +33,9 @@
       <div th:if="${err=='add_failed'}" style="color:#f87171;font-size:.9rem;">
         Không thêm được địa chỉ
       </div>
+      <div th:if="${err=='update_failed'}" style="color:#f87171;font-size:.9rem;">
+        Không cập nhật được địa chỉ
+      </div>
       <div th:if="${err=='default_failed'}" style="color:#f87171;font-size:.9rem;">
         Không đổi địa chỉ mặc định được
       </div>
@@ -37,12 +44,42 @@
       </div>
 
       <div style="margin-top:1rem;">
-        <a th:href="@{/account}"
-           style="color:#60a5fa;font-size:.9rem;text-decoration:none;"
-           onclick="event.preventDefault(); if (window.history.length > 1) { window.history.back(); } else { window.location.href='/account'; }">
-          ← Quay lại
-        </a>
-      </div>
+  <a th:href="@{/account}"
+     id="backLink"
+     style="color:#60a5fa;font-size:.9rem;text-decoration:none;cursor:pointer;">
+    ← Quay lại
+  </a>
+</div>
+
+<script>
+  (function () {
+    // referrer là URL của trang trước (có thể rỗng nếu user gõ thẳng)
+    var ref = document.referrer || "";
+
+    var go;
+    if (ref.includes("/checkout")) {
+      go = "/checkout";
+    } else if (ref.includes("/account")) {
+      go = "/account";
+    } else {
+      // fallback an toàn
+      go = "/account";
+    }
+
+    var link = document.getElementById("backLink");
+    if (link) {
+      // đặt lại href cho đẹp (để người dùng thấy preview đúng khi hover)
+      link.setAttribute("href", go);
+
+      // chặn default và điều hướng thủ công để tránh edge cases với referrer cross-origin
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        window.location.href = go;
+      });
+    }
+  })();
+</script>
+
     </header>
 
     <!-- Danh sách địa chỉ đã lưu -->
@@ -53,7 +90,7 @@
              background:#111827;
              border:1px solid rgba(148,163,184,.25);
              border-radius:16px;
-             padding:1rem 1rem 0.75rem;
+             padding:1rem 1rem .75rem;
              box-shadow:0 20px 60px rgba(0,0,0,.7);
            ">
 
@@ -77,27 +114,53 @@
             </div>
 
             <div th:if="${a.default}"
-                 style="display:inline-block;
-                        background:#22c55e;
-                        color:#000;
-                        font-size:.7rem;
-                        font-weight:600;
-                        border-radius:6px;
-                        padding:.25rem .5rem;
-                        margin-top:.75rem;">
+                 style="
+                   display:inline-block;
+                   background:#22c55e;
+                   color:#000;
+                   font-size:.7rem;
+                   font-weight:600;
+                   border-radius:6px;
+                   padding:.25rem .5rem;
+                   margin-top:.75rem;
+                   line-height:1.2;
+                 ">
               MẶC ĐỊNH
             </div>
           </div>
 
-          <div style="text-align:right;display:flex;flex-direction:column;gap:.5rem;">
+          <div style="text-align:right;display:flex;flex-direction:column;gap:.5rem;min-width:130px;">
 
-            <!-- Đặt làm mặc định -->
+            <!-- Sửa -->
+            <a th:href="@{'/account/address/edit/' + ${a.id}}"
+               style="
+                 display:inline-block;
+                 text-align:center;
+                 background:#3b82f6;
+                 border:0;
+                 color:#fff;
+                 font-size:.8rem;
+                 font-weight:600;
+                 padding:.5rem .75rem;
+                 border-radius:8px;
+                 text-decoration:none;
+                 cursor:pointer;
+                 box-shadow:0 0 10px rgba(96,165,250,.4);
+               ">
+              Sửa
+            </a>
+
+            <!-- Đặt làm mặc định (ẩn nếu đã mặc định) -->
             <form th:if="${!a.default}"
                   th:action="@{'/account/address/default/' + ${a.id}}"
                   method="post"
                   style="margin:0;">
+              <input type="hidden" th:if="${_csrf != null}"
+                     th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}" />
               <button type="submit"
                       style="
+                        width:100%;
                         background:#22c55e;
                         border:0;
                         color:#000;
@@ -114,9 +177,14 @@
             <!-- Xoá -->
             <form th:action="@{'/account/address/delete/' + ${a.id}}"
                   method="post"
-                  style="margin:0;">
+                  style="margin:0;"
+                  onsubmit="return confirm('Xoá địa chỉ này?');">
+              <input type="hidden" th:if="${_csrf != null}"
+                     th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}" />
               <button type="submit"
                       style="
+                        width:100%;
                         background:transparent;
                         border:1px solid rgba(248,113,113,.5);
                         color:#f87171;
@@ -152,6 +220,10 @@
       <form method="post"
             th:action="@{/account/address/add}"
             style="display:grid;gap:1rem;">
+
+        <input type="hidden" th:if="${_csrf != null}"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}" />
 
         <div>
           <label style="color:#94a3b8;font-size:.8rem;display:block;margin-bottom:.4rem;">

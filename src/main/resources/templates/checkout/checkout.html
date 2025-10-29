@@ -209,6 +209,7 @@
 
   <h4>Thanh toán</h4>
 
+  <!-- báo lỗi từ server (ví dụ chưa chọn chi nhánh) -->
   <div th:if="${error != null}" class="error-box" th:text="${error}">
     Có lỗi.
   </div>
@@ -220,15 +221,17 @@
       <div class="checkout-card">
 
         <form th:action="@{/checkout}" method="post" id="checkoutForm">
+          <!-- CSRF -->
           <input type="hidden" th:if="${_csrf != null}"
                  th:name="${_csrf.parameterName}"
                  th:value="${_csrf.token}" />
 
+          <!-- gửi id địa chỉ mặc định -->
           <input type="hidden" name="addressId"
                  id="addressIdField"
                  th:value="${selectedAddressId != null ? selectedAddressId : ''}" />
 
-          <!-- ĐỊA CHỈ GIAO HÀNG -->
+          <!-- ===== ĐỊA CHỈ GIAO HÀNG ===== -->
           <div class="checkout-label"
                style="font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;">
             Địa chỉ giao hàng
@@ -237,6 +240,7 @@
             Đang dùng địa chỉ mặc định. Muốn đổi địa chỉ giao khác → vào Sổ địa chỉ để đặt lại mặc định.
           </div>
 
+          <!-- nếu KHÔNG có địa chỉ nào -->
           <div th:if="${#lists.isEmpty(addresses)}"
                style="
                  background:rgba(239,68,68,.12);
@@ -252,7 +256,7 @@
             Thêm địa chỉ trong Sổ địa chỉ trước khi đặt đơn.
           </div>
 
-          <!-- chỉ render địa chỉ mặc định -->
+          <!-- chỉ render địa chỉ có default == true -->
           <div th:each="addr : ${addresses}"
                th:if="${addr.default}"
                class="addr-option addr-active"
@@ -285,7 +289,7 @@
             </div>
           </div>
 
-          <!-- GHI CHÚ -->
+          <!-- ===== GHI CHÚ ===== -->
           <div class="mb-3 mt-4">
             <div class="checkout-label">Ghi chú cho cửa hàng</div>
             <textarea class="note-area"
@@ -295,7 +299,7 @@
                       style="resize:none;"></textarea>
           </div>
 
-          <!-- THANH TOÁN -->
+          <!-- ===== PHƯƠNG THỨC THANH TOÁN ===== -->
           <div class="mb-3">
             <div class="checkout-label">Phương thức thanh toán</div>
             <select class="form-control" name="paymentMethod">
@@ -305,7 +309,8 @@
             </select>
           </div>
 
-          <!-- CHI NHÁNH -->
+          <!-- ===== CHI NHÁNH ===== -->
+          <!-- Nếu server-side session đã có activeBranchId -->
           <div class="branch-ok"
                th:if="${session.activeBranchId != null}">
             Giao từ chi nhánh
@@ -313,6 +318,7 @@
                style="color:#fff;font-weight:600;">CakeStore CN</b>.
           </div>
 
+          <!-- Nếu server chưa có, để JS check cookie BRANCH_ID -->
           <div class="branch-warning"
                th:if="${session.activeBranchId == null}"
                id="branchWarnCheckout">
@@ -320,7 +326,7 @@
             Chọn chi nhánh ở header (góc trên) trước khi đặt hàng.
           </div>
 
-          <!-- SUBMIT -->
+          <!-- ===== SUBMIT ===== -->
           <div class="mt-4">
             <button class="btn-primary"
                     id="placeOrderBtn"
@@ -341,7 +347,7 @@
       </div>
     </div>
 
-    <!-- RIGHT column -->
+    <!-- RIGHT column: recap đơn -->
     <div class="col-lg-5">
       <div class="summary-box">
 
@@ -396,6 +402,7 @@
 </div>
 
 <script>
+  // đọc cookie BRANCH_ID
   function getBranchCookie() {
     var found = document.cookie
       .split(';')
@@ -404,17 +411,20 @@
     return found || null;
   }
 
+  // Nếu server chưa có activeBranchId thì Thymeleaf sẽ render branchWarnCheckout + disable nút.
+  // Ta check cookie: nếu cookie có BRANCH_ID thì coi như user đã chọn chi nhánh rồi,
+  // chỉ là session chưa sync -> hide cảnh báo + enable nút.
   (function () {
     var warnEl = document.getElementById('branchWarnCheckout');
     var btnEl = document.getElementById('placeOrderBtn');
 
-    // Nếu server đã có session.activeBranchId, Thymeleaf KHÔNG render warnEl,
-    // nên ở đây ta thoát luôn
-    if (!warnEl) return;
+    if (!warnEl) {
+      // server đã có branch -> OK
+      return;
+    }
 
     var hasBranchCookie = !!getBranchCookie();
     if (hasBranchCookie) {
-      // Cookie đã có chi nhánh → user đã chọn chi nhánh trên header
       warnEl.style.display = 'none';
       if (btnEl) btnEl.disabled = false;
     } else {
@@ -422,12 +432,12 @@
     }
   })();
 
-  // Chặn submit nếu chưa có branch cả server lẫn cookie
+  // chặn submit nếu vẫn chưa có branch (cả session lẫn cookie đều rỗng)
   document.getElementById('checkoutForm').addEventListener('submit', function(ev){
     var warnEl = document.getElementById('branchWarnCheckout');
-    if (!warnEl) return;        // server biết branch → cho submit
-    if (getBranchCookie()) return; // cookie biết branch → cho submit
-    ev.preventDefault();        // chưa chọn branch -> block
+    if (!warnEl) return; // server-side đã có branch
+    if (getBranchCookie()) return; // cookie có branch
+    ev.preventDefault(); // block
   });
 </script>
 

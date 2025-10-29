@@ -29,9 +29,38 @@ public class Order {
     @JoinColumn(name = "BranchId", nullable = false)
     private Branch branch;
 
+    /**
+     * address: địa chỉ user đã chọn lúc checkout (tham chiếu Address hiện có).
+     * Vẫn có thể null, ví dụ sau này cho phép "lấy tại cửa hàng".
+     *
+     * Quan trọng: ta KHÔNG còn dùng Address này để render giao hàng trong lịch sử.
+     * Lý do: user có thể sửa địa chỉ này sau khi đặt.
+     *
+     * Thứ để render giao hàng là các field shipping* phía dưới (snapshot đóng
+     * băng).
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "AddressId")
-    private Address address; // có thể null
+    private Address address; // optional link for reference
+
+    // ===== Shipping snapshot (địa chỉ giao hàng đóng băng) =====
+    @Column(name = "ShippingFullName", length = 200, columnDefinition = "NVARCHAR(200)")
+    private String shippingFullName;
+
+    @Column(name = "ShippingPhone", length = 50, columnDefinition = "NVARCHAR(50)")
+    private String shippingPhone;
+
+    @Column(name = "ShippingLine1", length = 255, columnDefinition = "NVARCHAR(255)")
+    private String shippingLine1;
+
+    @Column(name = "ShippingWard", length = 255, columnDefinition = "NVARCHAR(255)")
+    private String shippingWard;
+
+    @Column(name = "ShippingDistrict", length = 255, columnDefinition = "NVARCHAR(255)")
+    private String shippingDistrict;
+
+    @Column(name = "ShippingCity", length = 255, columnDefinition = "NVARCHAR(255)")
+    private String shippingCity;
 
     // ===== Money =====
     @Column(name = "Subtotal", nullable = false, precision = 12, scale = 2)
@@ -62,7 +91,7 @@ public class Order {
     @Column(name = "Note", length = 500, columnDefinition = "NVARCHAR(500)")
     private String note;
 
-    // DB tự set
+    // DB tự set (trigger / default constraint / computed column)
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -90,6 +119,33 @@ public class Order {
     public Order(User user, Branch branch) {
         this.user = user;
         this.branch = branch;
+    }
+
+    // ===== Snapshot helper =====
+    /**
+     * Copy toàn bộ thông tin giao hàng từ Address hiện tại (entity Address của
+     * user)
+     * sang các field shipping* (đóng băng).
+     *
+     * Gọi 1 lần tại lúc tạo đơn, thay cho việc tạo Address mới trong DB.
+     */
+    public void snapshotShippingFrom(Address src) {
+        if (src == null) {
+            // nếu null (ví dụ đơn pick-up tại cửa hàng) thì cứ để trống
+            this.shippingFullName = null;
+            this.shippingPhone = null;
+            this.shippingLine1 = null;
+            this.shippingWard = null;
+            this.shippingDistrict = null;
+            this.shippingCity = null;
+            return;
+        }
+        this.shippingFullName = src.getFullName();
+        this.shippingPhone = src.getPhone();
+        this.shippingLine1 = src.getLine1();
+        this.shippingWard = src.getWard();
+        this.shippingDistrict = src.getDistrict();
+        this.shippingCity = src.getCity();
     }
 
     // ===== Getters/Setters =====
@@ -121,6 +177,56 @@ public class Order {
         this.address = address;
     }
 
+    // shipping snapshot fields
+    public String getShippingFullName() {
+        return shippingFullName;
+    }
+
+    public void setShippingFullName(String shippingFullName) {
+        this.shippingFullName = shippingFullName;
+    }
+
+    public String getShippingPhone() {
+        return shippingPhone;
+    }
+
+    public void setShippingPhone(String shippingPhone) {
+        this.shippingPhone = shippingPhone;
+    }
+
+    public String getShippingLine1() {
+        return shippingLine1;
+    }
+
+    public void setShippingLine1(String shippingLine1) {
+        this.shippingLine1 = shippingLine1;
+    }
+
+    public String getShippingWard() {
+        return shippingWard;
+    }
+
+    public void setShippingWard(String shippingWard) {
+        this.shippingWard = shippingWard;
+    }
+
+    public String getShippingDistrict() {
+        return shippingDistrict;
+    }
+
+    public void setShippingDistrict(String shippingDistrict) {
+        this.shippingDistrict = shippingDistrict;
+    }
+
+    public String getShippingCity() {
+        return shippingCity;
+    }
+
+    public void setShippingCity(String shippingCity) {
+        this.shippingCity = shippingCity;
+    }
+
+    // money
     public BigDecimal getSubtotal() {
         return subtotal;
     }
@@ -153,6 +259,7 @@ public class Order {
         this.total = nvl(total);
     }
 
+    // payment / status
     public PaymentMethod getPaymentMethod() {
         return paymentMethod;
     }
@@ -177,6 +284,7 @@ public class Order {
         this.status = status;
     }
 
+    // misc
     public String getNote() {
         return note;
     }

@@ -237,8 +237,9 @@
             <span class="total"
                   th:text="${
                     #numbers.formatDecimal(
-                      cart.subtotal().subtract(session.COUPON_VALUE?:T(java.math.BigDecimal).ZERO)
-                    ,0,'COMMA',0,'POINT')
+                      (cart.subtotal() != null ? cart.subtotal() : T(java.math.BigDecimal).ZERO)
+                        .subtract(session.COUPON_VALUE != null ? session.COUPON_VALUE : T(java.math.BigDecimal).ZERO),
+                      0,'COMMA',0,'POINT')
                   } + ' đ'">0</span>
           </div>
         </div>
@@ -254,6 +255,7 @@
       <div class="d-flex flex-column align-items-end gap-2 text-end">
 
         <!-- trạng thái chi nhánh -->
+
         <!-- case đã có session.activeBranchId -->
         <div class="branch-ok"
              th:if="${session.activeBranchId != null}">
@@ -261,7 +263,7 @@
         </div>
 
         <!-- case chưa có session.activeBranchId -->
-        <!-- tụi mình sẽ quyết định show / hide bằng JS dựa trên cookie BRANCH_ID -->
+        <!-- JS sẽ hide nếu cookie BRANCH_ID có -->
         <div class="branch-warning"
              th:if="${session.activeBranchId == null}"
              id="branchWarn">
@@ -327,11 +329,11 @@
     }
   });
 
-  // Ẩn warning nếu cookie BRANCH_ID đã có (tức user đã chọn chi nhánh ở header,
-  // nhưng session.activeBranchId hiện vẫn chưa sync trong phiên này)
+  // Ẩn warning nếu cookie BRANCH_ID đã có (user đã chọn chi nhánh ở header,
+  // nhưng session.activeBranchId chưa sync trong request hiện tại)
   (function () {
     var warnEl = document.getElementById('branchWarn');
-    if (!warnEl) return; // nếu Thymeleaf đã không render vì activeBranchId != null thì thôi
+    if (!warnEl) return; // nếu Thymeleaf không render vì activeBranchId != null thì thôi
 
     var cookieBranch = document.cookie
       .split(';')
@@ -339,7 +341,7 @@
       .find(function (c){ return c.startsWith('BRANCH_ID='); });
 
     if (cookieBranch) {
-      // user đã có chi nhánh (theo cookie) => hide warning
+      // user đã có chi nhánh (cookie có) => ẩn cảnh báo
       warnEl.style.display = 'none';
     }
   })();

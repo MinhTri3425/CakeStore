@@ -42,17 +42,22 @@ public class OrderServiceImpl implements OrderService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Order> findOrders(String status, Pageable pageable) {
-        List<Order> list = orderRepository.findOrdersWithUserAndBranch(status, pageable);
-        long total = orderRepository.count(); // có thể tối ưu lại sau
-        return new PageImpl<>(list, pageable, total);
-    }
+    
+
 
     @Override
+    @Transactional(readOnly = true)
     public Order findById(Long id) {
-        return orderRepository.findById(id).orElse(null);
+        return orderRepository.findById(id)
+                .map(order -> {
+                    // Ép Hibernate load các quan hệ trước khi session đóng
+                    if (order.getUser() != null) order.getUser().getFullName();
+                    if (order.getAddress() != null) order.getAddress().getLine1();
+                    order.getItems().size(); // ép load danh sách items
+
+                    return order;
+                })
+                .orElse(null);
     }
     
     @Override
@@ -144,4 +149,28 @@ public class OrderServiceImpl implements OrderService {
 
         return orderRepository.save(order);
     }
+
+	@Override
+	public Page<Order> findOrders(String orderStatus, Pageable pageable) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+    @Transactional(readOnly = true)
+    public Page<Order> findOrders(OrderStatus status, Pageable pageable) {
+        if (status == null) {
+            return orderRepository.findAll(pageable);
+        }
+        return orderRepository.findByStatus(status, pageable);
+    }
+
+
+
+
+	@Override
+	public Order findByIdWithItems(Long id) {
+		return orderRepository.findByIdWithItems(id).orElse(null);
+	}
+	
 }

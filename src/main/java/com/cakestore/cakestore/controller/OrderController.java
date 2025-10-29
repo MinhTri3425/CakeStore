@@ -8,11 +8,14 @@ import com.cakestore.cakestore.entity.Order.OrderStatus;
 import com.cakestore.cakestore.entity.Order.PaymentMethod;
 import com.cakestore.cakestore.service.OrderService;
 import com.cakestore.cakestore.service.BranchService; 
-import com.cakestore.cakestore.service.ProductService; 
+import com.cakestore.cakestore.service.ProductService;
+
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort; // Đã có import Sort
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -39,18 +42,22 @@ public class OrderController {
      * GET /admin/orders - Hiển thị danh sách đơn hàng
      */
     @GetMapping
-    public String listOrders(Model model, 
+    public String listOrders(Model model,
                              @RequestParam(defaultValue = "0") int page,
                              @RequestParam(defaultValue = "10") int size,
-                             @RequestParam(required = false) String status) {
-        
-        Pageable pageable = PageRequest.of(page, size);
-        model.addAttribute("orderPage", orderService.findOrders(status, pageable));
-        model.addAttribute("allStatuses", OrderStatus.values());
-        model.addAttribute("currentStatus", status);
+                             @RequestParam(required = false) OrderStatus status) {
 
-        return "admin/orders"; 
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Order> orderPage = orderService.findOrders(status, pageable);
+
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("allStatuses", OrderStatus.values());
+        model.addAttribute("currentStatus", status != null ? status.name() : "");
+
+        return "admin/orders";
     }
+
+
 
     /**
      * GET /admin/orders/new - Form tạo đơn hàng mới
@@ -149,18 +156,22 @@ public class OrderController {
      * GET /admin/orders/{id} - Xem chi tiết đơn hàng
      */
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public String viewOrder(@PathVariable Long id, Model model, RedirectAttributes ra) {
-        Order order = orderService.findById(id);
+        Order order = orderService.findByIdWithItems(id);
         if (order == null) {
             ra.addFlashAttribute("error", "Đơn hàng không tồn tại.");
             return "redirect:/admin/orders";
         }
-        
+
         model.addAttribute("order", order);
-        model.addAttribute("allStatuses", OrderStatus.values());
-        // TODO: Tạo template admin/order-detail.html
-        return "admin/order-detail"; 
+        model.addAttribute("allStatuses", Order.OrderStatus.values());
+
+        return "admin/order-detail"; // đúng đường dẫn templates/admin/order-detail.html
     }
+
+    
+    
 
     /**
      * POST /admin/orders/{id}/update-status - Cập nhật trạng thái đơn hàng

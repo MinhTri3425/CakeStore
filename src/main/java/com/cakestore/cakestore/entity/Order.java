@@ -7,6 +7,9 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 @Entity
 @Table(name = "Orders", indexes = {
         @Index(name = "IX_Orders_User", columnList = "UserId"),
@@ -21,15 +24,15 @@ public class Order {
     private Long id;
 
     // ===== FK =====
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "UserId", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "BranchId", nullable = false)
     private Branch branch;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "AddressId")
     private Address address;
 
@@ -63,10 +66,12 @@ public class Order {
     private String note;
 
     // DB tự set
-    @Column(name = "CreatedAt", insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "CreatedAt", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "UpdatedAt", insertable = false, updatable = false)
+    @UpdateTimestamp
+    @Column(name = "UpdatedAt")
     private LocalDateTime updatedAt;
 
     // ===== Relations (children) =====

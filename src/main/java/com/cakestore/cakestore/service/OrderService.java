@@ -24,4 +24,6 @@ public interface OrderService {
                             List<OrderItem> rawItems, BigDecimal total);
     
     // TODO: Thêm logic cập nhật Fulfillment/PaymentStatus
+    public Page<Order> findOrders(OrderStatus status, Pageable pageable);
+    public Order findByIdWithItems(Long id);
 }

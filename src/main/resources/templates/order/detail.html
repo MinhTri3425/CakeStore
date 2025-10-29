@@ -195,6 +195,26 @@
   .cancel-btn:hover{
     background:rgba(239,68,68,.1);
   }
+
+  /* nút thanh toán VNPay */
+  .pay-vnpay-btn{
+    background:var(--accent-grad);
+    border:0;
+    border-radius:10px;
+    font-size:.8rem;
+    font-weight:700;
+    line-height:1.2;
+    color:#0b1220;
+    padding:.6rem .9rem;
+    cursor:pointer;
+    box-shadow:
+      0 10px 24px rgba(34,197,94,.3),
+      0 0 16px rgba(96,165,250,.4);
+    display:inline-block;
+  }
+  .pay-vnpay-btn:hover{
+    filter:saturate(1.05);
+  }
 </style>
 
 <div class="container" style="max-width:1100px;padding:16px 16px 60px;">
@@ -217,7 +237,7 @@
     </div>
   </div>
 
-  <!-- STATUS + PAYMENT + BRANCH + (HỦY ĐƠN) -->
+  <!-- STATUS + PAYMENT + BRANCH + (HỦY / THANH TOÁN) -->
   <div class="section-card status-block">
     <div class="row g-4">
       <div class="col-md-4">
@@ -247,6 +267,7 @@
                order.status == T(com.cakestore.cakestore.entity.Order.OrderStatus).NEW
                and order.paymentStatus == T(com.cakestore.cakestore.entity.Order.PaymentStatus).UNPAID
              }">
+
           <form th:action="@{'/orders/' + ${order.id} + '/cancel'}"
                 method="post"
                 onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn này?');"
@@ -256,6 +277,28 @@
                    th:value="${_csrf.token}" />
             <button type="submit" class="cancel-btn">
               Hủy đơn
+            </button>
+          </form>
+        </div>
+
+        <!-- NÚT THANH TOÁN VNPAY:
+             render nếu đơn vẫn NEW,
+             chưa thanh toán (UNPAID),
+             và phương thức là VNPAY -->
+        <div style="margin-top:1rem;"
+             th:if="${
+               order.status == T(com.cakestore.cakestore.entity.Order.OrderStatus).NEW
+               and order.paymentStatus == T(com.cakestore.cakestore.entity.Order.PaymentStatus).UNPAID
+               and order.paymentMethod == T(com.cakestore.cakestore.entity.Order.PaymentMethod).VNPAY
+             }">
+          <form th:action="@{'/orders/' + ${order.id} + '/pay-vnpay'}"
+                method="post"
+                style="margin:0;display:inline-block;">
+            <input type="hidden" th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit" class="pay-vnpay-btn">
+              Thanh toán VNPay
             </button>
           </form>
         </div>
@@ -276,11 +319,13 @@
 
       <div class="col-md-4">
         <div class="status-label">GHI CHÚ KHÁCH</div>
-        <div class="row-line" th:if="${order.note != null and !#strings.isEmpty(order.note)}"
+        <div class="row-line"
+             th:if="${order.note != null and !#strings.isEmpty(order.note)}"
              th:text="${order.note}">
           Ít ngọt nha
         </div>
-        <div class="row-line" th:if="${order.note == null or #strings.isEmpty(order.note)}"
+        <div class="row-line"
+             th:if="${order.note == null or #strings.isEmpty(order.note)}"
              style="color:#94a3b8;">
           (Không có ghi chú)
         </div>

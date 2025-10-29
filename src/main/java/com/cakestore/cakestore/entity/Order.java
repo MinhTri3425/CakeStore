@@ -29,9 +29,9 @@ public class Order {
     @JoinColumn(name = "BranchId", nullable = false)
     private Branch branch;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "AddressId")
-    private Address address; // có thể null
+    private Address address;
 
     // ===== Money =====
     @Column(name = "Subtotal", nullable = false, precision = 12, scale = 2)

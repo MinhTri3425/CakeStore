@@ -11,6 +11,7 @@ import com.cakestore.cakestore.repository.ProductRepository; // Thêm ProductRep
 import com.cakestore.cakestore.service.OrderService;
 import com.cakestore.cakestore.service.InventoryService; // Thêm InventoryService
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder; // Thêm PasswordEncoder
 import org.springframework.stereotype.Service;
@@ -42,9 +43,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Page<Order> findOrders(String orderStatus, Pageable pageable) {
-        // TODO: Viết custom method trong Repository để lọc theo Status
-        return orderRepository.findAll(pageable);
+    @Transactional(readOnly = true)
+    public Page<Order> findOrders(String status, Pageable pageable) {
+        List<Order> list = orderRepository.findOrdersWithUserAndBranch(status, pageable);
+        long total = orderRepository.count(); // có thể tối ưu lại sau
+        return new PageImpl<>(list, pageable, total);
     }
 
     @Override

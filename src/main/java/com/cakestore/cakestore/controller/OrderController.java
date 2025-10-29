@@ -16,7 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import com.cakestore.cakestore.dto.ProductOption;
 import java.math.BigDecimal;
 import java.util.ArrayList; 
 import java.util.List; 
@@ -60,15 +60,23 @@ public class OrderController {
         model.addAttribute("order", new Order());
         model.addAttribute("branches", branchService.findAllActive());
         model.addAttribute("paymentMethods", PaymentMethod.values());
-        
-        // [FIX] Khắc phục lỗi UnknownPathException: 'asc'
-        // Sử dụng cú pháp Sort.by(Direction, properties) thay vì Sort.by(properties)
-        model.addAttribute("products", 
-            productService.findPaginatedProducts(null, null, 
-                PageRequest.of(0, 1000, Sort.by(Sort.Direction.ASC, "name")) // ĐÃ SỬA CHỖ NÀY
-            ).getContent());
 
-        return "admin/order-form"; 
+ 
+
+
+        // Lấy danh sách sản phẩm & ánh xạ sang DTO
+        var products = productService.findPaginatedProducts(
+            null, null,
+            PageRequest.of(0, 1000, Sort.by(Sort.Direction.ASC, "name"))
+        ).getContent();
+
+        var productOptions = products.stream()
+            .map(p -> new ProductOption(p.getId(), p.getName(), p.getSku(), p.getPrice()))
+            .toList();
+
+        model.addAttribute("products", productOptions);
+
+        return "admin/order-form";
     }
 
     /**

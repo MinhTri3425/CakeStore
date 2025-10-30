@@ -92,10 +92,10 @@ public class Order {
     private String note;
 
     // DB tự set (trigger / default constraint / computed column)
-    @Column(name = "CreatedAt", insertable = false, updatable = false)
+    @Column(name = "CreatedAt", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "UpdatedAt", insertable = false, updatable = false)
+    @Column(name = "UpdatedAt", nullable = false)
     private LocalDateTime updatedAt;
 
     // ===== Relations (children) =====
@@ -297,8 +297,16 @@ public class Order {
         return createdAt;
     }
 
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public Set<OrderItem> getItems() {

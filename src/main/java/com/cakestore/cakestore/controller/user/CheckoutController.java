@@ -133,12 +133,12 @@ public class CheckoutController {
 
         // snapshot cố định địa chỉ giao hàng (tránh phụ thuộc động)
         order.snapshotShippingFrom(chosen);
-
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
         order.setSubtotal(subtotal);
         order.setDiscount(discount);
         order.setShippingFee(shippingFee);
         order.setTotal(total);
-
         order.setPaymentMethod(safePaymentMethod(paymentMethodStr));
         order.setPaymentStatus(Order.PaymentStatus.UNPAID);
         order.setStatus(Order.OrderStatus.NEW); // NEW = chờ duyệt

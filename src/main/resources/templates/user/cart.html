@@ -226,7 +226,8 @@
             <b th:text="${#numbers.formatDecimal(cart.subtotal(),0,'COMMA',0,'POINT')} + ' đ'">0</b>
           </div>
 
-          <div th:if="${session.COUPON_VALUE != null}">
+          <div th:if="${session.COUPON_VALUE != null
+                       and session.COUPON_VALUE.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
             Giảm:
             <b class="text-success"
                th:text="${#numbers.formatDecimal(session.COUPON_VALUE,0,'COMMA',0,'POINT')} + ' đ'">0</b>
@@ -255,17 +256,15 @@
       <div class="d-flex flex-column align-items-end gap-2 text-end">
 
         <!-- trạng thái chi nhánh -->
-
-        <!-- case đã có session.activeBranchId -->
         <div class="branch-ok"
-             th:if="${session.activeBranchId != null}">
+             th:if="${selectedBranchId != null}">
           Đang chọn chi nhánh giao hàng.
         </div>
 
-        <!-- case chưa có session.activeBranchId -->
+        <!-- case chưa có selectedBranchId -->
         <!-- JS sẽ hide nếu cookie BRANCH_ID có -->
         <div class="branch-warning"
-             th:if="${session.activeBranchId == null}"
+             th:if="${selectedBranchId == null}"
              id="branchWarn">
           ⚠ Chưa chọn chi nhánh giao hàng.
           <br/>Chọn chi nhánh ở header trước khi thanh toán.
@@ -330,10 +329,10 @@
   });
 
   // Ẩn warning nếu cookie BRANCH_ID đã có (user đã chọn chi nhánh ở header,
-  // nhưng session.activeBranchId chưa sync trong request hiện tại)
+  // nhưng selectedBranchId chưa sync trong request hiện tại)
   (function () {
     var warnEl = document.getElementById('branchWarn');
-    if (!warnEl) return; // nếu Thymeleaf không render vì activeBranchId != null thì thôi
+    if (!warnEl) return; // nếu Thymeleaf không render vì selectedBranchId != null thì thôi
 
     var cookieBranch = document.cookie
       .split(';')

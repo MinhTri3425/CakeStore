@@ -38,7 +38,7 @@ public class CartController {
 
     // coupon deps
     private final CouponRepository couponRepo;
-    private final BranchRepository branchRepo;
+    private final BranchRepository branchRepo; // có thể không còn dùng, nhưng giữ nguyên để không ảnh hưởng nơi khác
 
     public CartController(
             CartSessionService cartSvc,
@@ -78,15 +78,13 @@ public class CartController {
 
         // lấy coupon đã apply trong session (nếu có)
         BigDecimal couponValue = (BigDecimal) session.getAttribute("COUPON_VALUE");
-        if (couponValue == null) {
+        if (couponValue == null)
             couponValue = BigDecimal.ZERO;
-        }
 
         // tổng sau giảm (chưa tính ship vì trang cart của bạn chưa có phí ship)
         BigDecimal total = subtotal.subtract(couponValue);
-        if (total.compareTo(BigDecimal.ZERO) < 0) {
+        if (total.compareTo(BigDecimal.ZERO) < 0)
             total = BigDecimal.ZERO;
-        }
 
         model.addAttribute("cart", cart);
         model.addAttribute("subtotal", subtotal);
@@ -94,8 +92,6 @@ public class CartController {
         model.addAttribute("total", total);
 
         // để `<p class="coupon-note"... th:text="${session.COUPON_MSG}"></p>`
-        // thymeleaf tự đọc session.COUPON_MSG rồi nên không cần add, nhưng add cũng
-        // không sao
         model.addAttribute("couponMsg", session.getAttribute("COUPON_MSG"));
         model.addAttribute("couponCode", session.getAttribute("COUPON_CODE"));
 
@@ -111,7 +107,8 @@ public class CartController {
     public String applyCoupon(
             @RequestParam("code") String rawCode,
             HttpSession session,
-            Authentication auth) {
+            Authentication auth,
+            HttpServletRequest request) { // thêm request để đọc cookie qua branchCtx
         // luôn clear message cũ trước
         session.removeAttribute("COUPON_MSG");
 
@@ -129,13 +126,9 @@ public class CartController {
             return "redirect:/cart";
         }
 
-        // 2. lấy branch hiện tại (để check coupon theo chi nhánh nếu coupon bị ràng
-        // buộc)
-        Long activeBranchId = (Long) session.getAttribute("activeBranchId");
-        Branch currentBranch = null;
-        if (activeBranchId != null) {
-            currentBranch = branchRepo.findById(activeBranchId).orElse(null);
-        }
+        // 2. lấy branch hiện tại từ cookie/session qua BranchContextService
+        Optional<Branch> currentBranchOpt = branchCtx.resolveCurrentBranch(session, request);
+        Branch currentBranch = currentBranchOpt.orElse(null);
 
         // 3. tìm coupon theo code
         String code = rawCode == null ? "" : rawCode.trim();

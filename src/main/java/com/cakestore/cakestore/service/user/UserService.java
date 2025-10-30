@@ -29,7 +29,7 @@ public class UserService {
         u.setFullName(fullName);
         u.setEmail(email);
         u.setPasswordHash(encoder.encode(password));
-        u.setActive(false); // chưa kích hoạt
+        u.setActive(true); // kích hoạt
         u.setRole("customer");
 
         userRepository.save(u);

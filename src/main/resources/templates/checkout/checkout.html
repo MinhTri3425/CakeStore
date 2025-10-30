@@ -220,6 +220,7 @@
     <div class="col-lg-7">
       <div class="checkout-card">
 
+        <!-- ✅ route đúng với controller: /user/checkout -->
         <form th:action="@{/checkout}" method="post" id="checkoutForm">
           <!-- CSRF -->
           <input type="hidden" th:if="${_csrf != null}"
@@ -304,23 +305,22 @@
             <div class="checkout-label">Phương thức thanh toán</div>
             <select class="form-control" name="paymentMethod">
               <option value="COD">Thanh toán khi nhận hàng (COD)</option>
-              <option value="MOMO">Momo</option>
               <option value="VNPAY">VNPay</option>
             </select>
           </div>
 
           <!-- ===== CHI NHÁNH ===== -->
-          <!-- Nếu server-side session đã có activeBranchId -->
+          <!-- ✅ check theo model activeBranch do controller set -->
           <div class="branch-ok"
-               th:if="${session.activeBranchId != null}">
+               th:if="${activeBranch != null}">
             Giao từ chi nhánh
-            <b th:text="${activeBranch != null ? activeBranch.name : 'Đã chọn'}"
+            <b th:text="${activeBranch.name}"
                style="color:#fff;font-weight:600;">CakeStore CN</b>.
           </div>
 
           <!-- Nếu server chưa có, để JS check cookie BRANCH_ID -->
           <div class="branch-warning"
-               th:if="${session.activeBranchId == null}"
+               th:if="${activeBranch == null}"
                id="branchWarnCheckout">
             ⚠ Chưa chọn chi nhánh giao hàng.
             Chọn chi nhánh ở header (góc trên) trước khi đặt hàng.
@@ -331,7 +331,7 @@
             <button class="btn-primary"
                     id="placeOrderBtn"
                     type="submit"
-                    th:attr="disabled=${session.activeBranchId == null} ? 'disabled' : null">
+                    th:attr="disabled=${activeBranch == null or #lists.isEmpty(addresses)} ? 'disabled' : null">
               Đặt hàng
             </button>
           </div>
@@ -411,9 +411,8 @@
     return found || null;
   }
 
-  // Nếu server chưa có activeBranchId thì Thymeleaf sẽ render branchWarnCheckout + disable nút.
-  // Ta check cookie: nếu cookie có BRANCH_ID thì coi như user đã chọn chi nhánh rồi,
-  // chỉ là session chưa sync -> hide cảnh báo + enable nút.
+  // Nếu server chưa có activeBranch (controller set null) thì Thymeleaf sẽ render branchWarnCheckout + disable nút.
+  // Check cookie: nếu có BRANCH_ID thì enable tạm (session sẽ sync ở GET tiếp theo).
   (function () {
     var warnEl = document.getElementById('branchWarnCheckout');
     var btnEl = document.getElementById('placeOrderBtn');
@@ -432,7 +431,7 @@
     }
   })();
 
-  // chặn submit nếu vẫn chưa có branch (cả session lẫn cookie đều rỗng)
+  // chặn submit nếu vẫn chưa có branch (cả server lẫn cookie đều rỗng)
   document.getElementById('checkoutForm').addEventListener('submit', function(ev){
     var warnEl = document.getElementById('branchWarnCheckout');
     if (!warnEl) return; // server-side đã có branch

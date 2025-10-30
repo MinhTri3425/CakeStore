@@ -1,0 +1,85 @@
+package com.cakestore.cakestore.service.admin.impl;
+
+import com.cakestore.cakestore.entity.Category;
+import com.cakestore.cakestore.repository.admin.AdminCategoryRepository;
+import com.cakestore.cakestore.repository.admin.AdminProductRepository;
+import com.cakestore.cakestore.service.admin.CategoryService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class CategoryServiceImpl implements CategoryService {
+
+    private final AdminCategoryRepository categoryRepository;
+
+    private final AdminProductRepository productRepository; // ✅ thêm dòng này
+
+    public CategoryServiceImpl(AdminCategoryRepository categoryRepository,
+            AdminProductRepository productRepository) { // ✅ inject thêm
+        this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
+    }
+
+    @Override
+    public List<Category> findAll() {
+        // Tìm tất cả Category đang hoạt động và sắp xếp theo sortOrder
+        return categoryRepository.findAll().stream()
+                .filter(Category::isActive)
+                .sorted((c1, c2) -> Integer.compare(c1.getSortOrder(), c2.getSortOrder()))
+                .toList();
+    }
+
+    @Override
+    public Category findById(Long id) {
+        return categoryRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public Category save(Category category) {
+        // Logic tự động tạo slug nếu cần
+        if (category.getSlug() == null || category.getSlug().isEmpty()) {
+            // Placeholder: Cần triển khai hàm chuyển tên -> slug
+            category.setSlug(generateSlug(category.getName()));
+        }
+        // Liên kết lại Parent Category nếu chỉ truyền ID
+        if (category.getParent() != null && category.getParent().getId() != null) {
+            Category parent = findById(category.getParent().getId());
+            category.setParent(parent);
+        } else {
+            category.setParent(null);
+        }
+
+        return categoryRepository.save(category);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        long used = productRepository.countByCategoryId(id);
+        if (used > 0) {
+            throw new IllegalStateException("Không thể xoá: còn " + used + " sản phẩm đang dùng danh mục này.");
+        }
+        categoryRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        // TODO: Triển khai phương thức kiểm tra tên tồn tại
+        return false;
+    }
+
+    // Hàm giả định tạo slug
+    private String generateSlug(String name) {
+        return name.toLowerCase().replaceAll("\\s+", "-").replaceAll("[^a-z0-9-]", "");
+    }
+
+    @Override
+    public Page<Category> search(String q, Boolean active, Pageable pageable) {
+        String query = (q == null || q.isBlank()) ? null : q.trim();
+        return categoryRepository.search(query, active, pageable);
+    }
+
+}

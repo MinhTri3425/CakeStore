@@ -41,7 +41,9 @@ public class Branch {
 
     @Column(name = "IsActive", nullable = false)
     private boolean isActive = true;
-
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ManagerId", unique = true)
+    private User manager;
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -161,6 +163,14 @@ public class Branch {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public User getManager() {
+        return manager;
+    }
+
+    public void setManager(User manager) {
+        this.manager = manager;
     }
 
     public Set<BranchProduct> getBranchProducts() {

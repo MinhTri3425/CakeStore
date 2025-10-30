@@ -14,10 +14,10 @@ import java.util.Map;
 import java.util.HashMap;
 
 @Controller
-public class BranchController {
+public class UserBranchController {
     private final BranchRepository branchRepository;
 
-    public BranchController(BranchRepository branchRepository) {
+    public UserBranchController(BranchRepository branchRepository) {
         this.branchRepository = branchRepository;
     }
 

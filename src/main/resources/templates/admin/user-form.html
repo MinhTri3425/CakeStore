@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <div th:replace="~{fragments/admin/header :: header-css}"></div>
+    <title th:text="${isEdit ? 'Chỉnh sửa Tài khoản' : 'Thêm Tài khoản Mới'}"></title>
+</head>
+<body class="layout-fixed sidebar-expand-lg">
+<div class="app-wrapper"> 
+
+	<div th:replace="~{fragments/admin/header :: header}"></div>
+	
+	<div th:replace="~{admin/home :: sidebar}"></div>
+
+	<main class="app-main">
+		<div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6"><h3 class="mb-0" th:text="${isEdit ? 'Chỉnh sửa Tài khoản' : 'Thêm Tài khoản Mới'}"></h3></div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-end">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/home}">Home</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/admin/users}">Tài khoản</a></li>
+                            <li class="breadcrumb-item active" aria-current="page" th:text="${isEdit ? 'Chỉnh sửa' : 'Tạo mới'}"></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-content">
+            <div class="container-fluid">
+				<div class="row justify-content-center">
+					<div class="col-md-10"> <div class="card card-primary">
+							<div class="card-header">
+								<h3 class="card-title" th:text="${isEdit ? 'Chỉnh sửa: ' + user.email : 'Thêm Tài khoản Mới'}"></h3>
+							</div>
+							
+							<form th:action="@{/admin/users}" th:object="${user}" method="post">
+								<div class="card-body">
+									<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+									
+									<input type="hidden" th:if="${isEdit}" th:field="*{id}" />
+
+									<div class="mb-3">
+										<label class="form-label">Tên đầy đủ</label> <input type="text"
+											th:field="*{fullName}" class="form-control" required>
+									</div>
+
+									<div class="mb-3">
+										<label class="form-label">Email</label> <input type="email"
+											th:field="*{email}" class="form-control" th:readonly="${isEdit}"
+											required>
+									</div>
+
+									<div class="mb-3">
+										<label class="form-label">Số điện thoại</label> <input type="tel"
+											th:field="*{phone}" class="form-control">
+									</div>
+
+									<div class="mb-3">
+										<label class="form-label"
+											th:text="${isEdit ? 'Mật khẩu (để trống nếu không đổi)' : 'Mật khẩu'}"></label>
+										<input type="password" name="rawPassword" class="form-control"
+											th:required="${!isEdit}">
+									</div>
+
+									<div class="mb-3">
+										<label class="form-label">Vai trò (Role)</label> <select
+											th:field="*{role}" class="form-select" id="roleSelect">
+											<option th:each="r : ${availableRoles}" th:value="${r}"
+												th:text="${r}">customer</option>
+										</select>
+									</div>
+									
+									<div class="mb-3" id="branchSelectContainer" style="display:none;">
+										<label class="form-label">Chi nhánh (Bắt buộc cho Staff)</label>
+										<select name="branchId" id="branchIdSelect" class="form-select">
+											<option value="">-- Chọn chi nhánh --</option>
+											<option th:each="b : ${branches}" th:value="${b.id}"
+													th:text="${b.code + ' - ' + b.name}"
+													th:selected="${user.branch != null && user.branch.id == b.id}">
+											</option>
+										</select>
+									</div>
+									<h5 class="mt-4">Địa chỉ Mặc định (Tùy chọn)</h5>
+									<div th:with="defaultAddr=${user.getDefaultAddress()}">
+										<div class="row">
+											<div class="mb-3 col-md-6">
+												<label for="city" class="form-label">Thành phố</label>
+												<input type="text" name="city" id="city" class="form-control" 
+													th:value="${isEdit and defaultAddr != null ? defaultAddr.city : ''}" /> </div>
+											<div class="mb-3 col-md-6">
+												<label for="district" class="form-label">Quận/Huyện</label>
+												<input type="text" name="district" id="district" class="form-control" 
+													th:value="${isEdit and defaultAddr != null ? defaultAddr.district : ''}" />
+											</div>
+										</div>
+										<div class="row">
+											<div class="mb-3 col-md-6">
+												<label for="ward" class="form-label">Phường/Xã</label>
+												<input type="text" name="ward" id="ward" class="form-control" 
+													th:value="${isEdit and defaultAddr != null ? defaultAddr.ward : ''}" />
+											</div>
+											<div class="mb-3 col-md-6">
+												<label for="line1" class="form-label">Số nhà, Tên đường</label>
+												<input type="text" name="line1" id="line1" class="form-control" 
+													th:value="${isEdit and defaultAddr != null ? defaultAddr.line1 : ''}" />
+											</div>
+										</div>
+									</div>
+									
+									<div class="mb-3 form-check">
+										<input type="checkbox" th:field="*{active}"
+											class="form-check-input" id="isActive"> <label
+											class="form-check-label" for="isActive">Kích hoạt</label>
+									</div>
+								</div>
+
+								<div class="card-footer">
+									<button type="submit" class="btn btn-primary"
+										th:text="${isEdit ? 'Cập nhật' : 'Thêm mới'}"></button>
+									<a th:href="@{/admin/users}" class="btn btn-secondary">Hủy</a>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+            </div>
+        </div>
+    </main>
+
+	<div th:replace="~{fragments/admin/footer :: footer}"></div>
+	
+</div> <div th:replace="~{fragments/admin/footer :: footer-scripts}"></div>
+<script th:replace="~{admin/home :: script-active-sidebar}"></script>
+
+<script>
+	document.addEventListener("DOMContentLoaded", function() {
+		const roleSelect = document.getElementById('roleSelect');
+		const branchContainer = document.getElementById('branchSelectContainer');
+		const branchSelect = document.getElementById('branchIdSelect');
+
+		function toggleBranchSelect() {
+			if (roleSelect.value === 'staff') {
+				branchContainer.style.display = 'block';
+				branchSelect.required = true;
+			} else {
+				branchContainer.style.display = 'none';
+				branchSelect.required = false;
+			}
+		}
+		
+		// Toggle khi tải trang
+		toggleBranchSelect(); 
+		
+		// Toggle khi đổi Role
+		roleSelect.addEventListener('change', toggleBranchSelect);
+	});
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <div th:replace="~{fragments/admin/header :: header-css}"></div>
+    <title>Quản lý User & Staff</title>
+</head>
+<body class="layout-fixed sidebar-expand-lg">
+<div class="app-wrapper"> 
+
+	<div th:replace="~{fragments/admin/header :: header}"></div>
+	
+	<div th:replace="~{admin/home :: sidebar}"></div>
+
+	<main class="app-main">
+		<div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6"><h3 class="mb-0">Quản lý Tài khoản (User & Staff)</h3></div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-end">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/home}">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Tài khoản</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-content">
+            <div class="container-fluid">
+                
+				<div th:if="${success}" class="alert alert-success" role="alert">
+					<span th:text="${success}"></span>
+				</div>
+				<div th:if="${error}" class="alert alert-danger" role="alert">
+					<span th:text="${error}"></span>
+				</div>
+				
+				<div class="card mb-4">
+					<div class="card-header">
+						<h3 class="card-title">Bộ lọc và Tìm kiếm</h3>
+					</div>
+					<div class="card-body">
+						<form th:action="@{/admin/users}" method="get"
+							class="d-flex align-items-center gap-2 flex-wrap">
+							<input type="search" name="keyword" th:value="${keyword}"
+								class="form-control" placeholder="Tìm kiếm ...">
+
+							<select name="status" class="form-select" style="min-width: 120px;">
+								<option th:value="all" th:selected="${status == 'all'}">Tất cả TT</option>
+								<option th:value="active" th:selected="${status == 'active'}">Active</option>
+								<option th:value="inactive" th:selected="${status == 'inactive'}">Inactive</option>
+							</select>
+							
+							<select name="branchId" class="form-select" style="min-width: 180px;">
+								<option value="">-- Lọc theo Chi nhánh --</option>
+								<option th:each="b : ${branches}" 
+										th:value="${b.id}" 
+										th:text="${b.code}"
+										th:selected="${selectedBranchId != null && selectedBranchId == b.id}">
+								</option>
+							</select>
+
+							<button type="submit"
+								class="btn btn-info h-100 w-auto px-3 fw-semibold text-nowrap d-flex align-items-center justify-content-center">Tìm kiếm</button>
+							
+							<a th:href="@{/admin/users/new}" class="btn btn-primary ms-auto"> Thêm
+								Tài khoản Mới </a>
+						</form>
+					</div>
+				</div>
+				
+				<div class="card">
+					<div class="card-header">
+						<h3 class="card-title">Danh sách Tài khoản</h3>
+					</div>
+					<div class="card-body p-0">
+						<table class="table table-bordered table-striped align-middle">
+							<thead class="table-dark">
+								<tr>
+									<th>ID</th>
+									<th>Email</th>
+									<th>Tên đầy đủ</th>
+									<th>Role</th>
+									<th>Chi nhánh</th> <th>Trạng thái</th>
+									<th>Thao tác</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="user : ${users}">
+									<td th:text="${user.id}">1</td>
+									<td th:text="${user.email}">user@example.com</td>
+									<td th:text="${user.fullName}">User Name</td>
+									<td><span class="badge"
+										th:classappend="${user.role == 'admin' ? 'text-bg-danger' : (user.role == 'staff' ? 'text-bg-warning' : 'text-bg-primary')}"
+										th:text="${user.role}">customer</span></td>
+									
+									<td th:text="${(user.role == 'staff' && user.branch != null) ? user.branch.code : '—'}">HCM-Q1</td>
+
+									<td><span th:if="${user.active}" class="badge text-bg-success">Active</span>
+										<span th:unless="${user.active}" class="badge text-bg-secondary">Inactive</span>
+									</td>
+									<td><a th:href="@{/admin/users/{id}/edit(id=${user.id})}"
+										class="btn btn-sm btn-info">Sửa</a>
+										<form th:action="@{/admin/users/{id}/toggle(id=${user.id})}"
+											method="post" style="display: inline;"
+											onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái của tài khoản này?');">
+											<button type="submit" class="btn btn-sm"
+												th:classappend="${user.active ? 'btn-secondary' : 'btn-success'}"
+												th:text="${user.active ? 'Disable' : 'Enable'}">Disable</button>
+										</form></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+					<div class="card-footer clearfix">
+						<div th:if="${userPage.empty}" class="alert alert-info mb-0">Không
+							có tài khoản nào được tìm thấy.</div>
+
+						<nav th:if="${totalPages > 1}" aria-label="Page navigation">
+							<ul class="pagination m-0 float-end">
+								<li class="page-item"
+									th:classappend="${currentPage == 0} ? ' disabled'"><a
+									class="page-link"
+									th:href="@{|/admin/users?page=${currentPage-1}&keyword=${keyword}&status=${status}&branchId=${selectedBranchId}|}">«</a>
+								</li>
+
+								<li class="page-item"
+									th:each="i : ${#numbers.sequence(0, totalPages-1)}"
+									th:classappend="${i == currentPage} ? ' active'"><a
+									class="page-link" th:text="${i + 1}"
+									th:href="@{|/admin/users?page=${i}&keyword=${keyword}&status=${status}&branchId=${selectedBranchId}|}">1</a>
+								</li>
+
+								<li class="page-item"
+									th:classappend="${currentPage + 1 >= totalPages} ? ' disabled'">
+									<a class="page-link"
+									th:href="@{|/admin/users?page=${currentPage+1}&keyword=${keyword}&status=${status}&branchId=${selectedBranchId}|}">»</a>
+								</li>
+							</ul>
+						</nav>
+					</div>
+				</div>
+            </div>
+        </div>
+    </main>
+
+	<div th:replace="~{fragments/admin/footer :: footer}"></div>
+	
+</div> <div th:replace="~{fragments/admin/footer :: footer-scripts}"></div>
+<script th:replace="~{admin/home :: script-active-sidebar}"></script>
+
+</body>
+</html>

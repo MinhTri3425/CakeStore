@@ -46,13 +46,24 @@ public class SecurityConfig {
                                                                 "/search", "/category/**", "/product/**",
                                                                 "/cart/**", "/fav/**",
                                                                 "/register", "/forgot",
+                                                                "/verify",
                                                                 "/api/branches",
                                                                 "/branch/select",
                                                                 "/css/**", "/js/**", "/images/**", "/uploads/**",
                                                                 "/webjars/**",
                                                                 "/h2-console/**")
                                                 .permitAll()
+                                                .requestMatchers("/staff/home")
+                                                .hasAnyAuthority("ROLE_" + ADMIN, "ROLE_" + STAFF)
 
+                                                // SỬA: Dùng hasAnyAuthority và thêm tiền tố ROLE_
+                                                // Staff và Admin đều có thể vào các chức năng dùng chung trong /admin/
+                                                .requestMatchers(
+                                                                "/admin/products", "/admin/products/**", // Quản lý Sản
+                                                                                                         // phẩm
+                                                                "/admin/orders", "/admin/orders/**", // Quản lý Đơn hàng
+                                                                "/admin/chat" // Chat
+                                                ).hasAnyAuthority("ROLE_" + ADMIN, "ROLE_" + STAFF)
                                                 // --- API & trang nội bộ ---
                                                 .requestMatchers("/api/admin/**", "/admin/**").hasRole(ADMIN)
                                                 .requestMatchers("/api/staff/**", "/staff/**").hasAnyRole(ADMIN, STAFF)

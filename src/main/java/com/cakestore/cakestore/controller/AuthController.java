@@ -5,6 +5,7 @@ import com.cakestore.cakestore.entity.OtpToken;
 import com.cakestore.cakestore.entity.User;
 import com.cakestore.cakestore.service.OtpService;
 import com.cakestore.cakestore.service.user.UserService;
+import com.cakestore.cakestore.service.admin.StatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +22,12 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class AuthController {
+    private final StatsService statsService;
+
+    public AuthController(StatsService statsService) {
+        this.statsService = statsService;
+    }
+
     @Autowired
     private UserService userService;
 
@@ -55,15 +62,23 @@ public class AuthController {
     }
 
     @GetMapping("/admin/home")
-    public String adminHome() {
-        // TODO: Tạo template admin/home.html
-        return "admin/home";
+    public String adminHome(Model model) {
+        model.addAllAttributes(statsService.getDashboardStats());
+        return "admin/home"; // Trả về dashboard của Admin
     }
 
     @GetMapping("/staff/home")
-    public String staffHome() {
-        // TODO: Tạo template staff/home.html
-        return "staff/home";
+    public String staffHome(Model model) {
+        // Lấy dữ liệu cho Staff
+        var dashboardData = statsService.getDashboardStats();
+        long ordersToProcess = (long) dashboardData.getOrDefault("newOrders", 0L);
+        int lowStockProducts = 5;
+
+        model.addAttribute("ordersToProcess", ordersToProcess);
+        model.addAttribute("lowStockProducts", lowStockProducts);
+
+        model.addAttribute("view", "admin/staff-dashboard");
+        return "admin/admin_layout"; // Vẫn trả về layout cha
     }
 
     @GetMapping("/register")

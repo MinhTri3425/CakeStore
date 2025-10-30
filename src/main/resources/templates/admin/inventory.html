@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <div th:replace="~{fragments/admin/header :: header-css}"></div>
+    <title>Quản lý Tồn kho & Nhập hàng</title>
+</head>
+<body class="layout-fixed sidebar-expand-lg">
+<div class="app-wrapper"> 
+
+    <div th:replace="~{fragments/admin/header :: header}"></div>
+    
+    <div th:replace="~{admin/home :: sidebar}"></div>
+
+    <main class="app-main">
+		<div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6"><h3 class="mb-0">Quản lý Tồn kho & Nhập hàng</h3></div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-end">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/home}">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Tồn kho</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-content">
+            <div class="container-fluid">
+                
+                <div th:if="${success}" class="alert alert-success" role="alert"><span th:text="${success}"></span></div>
+                <div th:if="${error}" class="alert alert-danger" role="alert"><span th:text="${error}"></span></div>
+
+				<div class="card mb-4">
+					<div class="card-header">
+						<h3 class="card-title">Bộ lọc và Nhập kho</h3>
+					</div>
+					<div class="card-body">
+						<form th:action="@{/admin/inventory}" method="get">
+							<div class="row g-3 align-items-center">
+								<div class="col-lg-4">
+									<input type="search" name="keyword" th:value="${keyword}"
+										class="form-control" placeholder="Tìm kiếm theo Tên SP/SKU">
+								</div>
+
+								<div class="col-lg-3">
+									<select name="branchId" class="form-select">
+										<option value="" th:selected="${selectedBranchId == null}">-- Lọc theo Chi nhánh --</option>
+										<option th:each="branch : ${branches}" th:value="${branch.id}"
+											th:text="${branch.code} + ' - ' + ${branch.name}"
+											th:selected="${selectedBranchId != null and selectedBranchId == branch.id}"></option>
+									</select>
+								</div>
+
+								<div class="col-lg-5 d-flex gap-2 justify-content-end">
+									<button type="submit" class="btn btn-info">Áp dụng</button>
+									<a th:href="@{/admin/inventory/new}" class="btn btn-primary">Nhập kho/Cập nhật tồn</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<div class="card">
+					<div class="card-header">
+						<h3 class="card-title">Danh sách Tồn kho</h3>
+					</div>
+					<div class="card-body p-0">
+						<table class="table table-bordered table-striped align-middle">
+							<thead class="table-dark">
+								<tr>
+									<th>ID</th>
+									<th>Sản phẩm (SKU)</th>
+									<th>Chi nhánh</th>
+									<th>Tồn kho (Quantity)</th>
+									<th>Đã giữ chỗ (Reserved)</th>
+									<th>Khả dụng (Available)</th>
+									<th>Thao tác</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="inventory : ${inventories}">
+									<td th:text="${inventory.id}">1</td>
+									<td>
+										<span th:text="${inventory.product.name}">Bánh Kem Dâu</span>
+										(<span th:text="${inventory.product.sku}">CAKE-001</span>)
+									</td>
+									<td th:text="${inventory.branch.code}">HCM-Q1</td>
+									<td th:text="${inventory.quantity}">100</td>
+									<td th:text="${inventory.reserved}" class="text-danger">5</td>
+									<td><span class="fw-bold" th:text="${inventory.available}">95</span></td>
+									<td>
+										<a th:href="@{/admin/inventory/{id}/edit(id=${inventory.id})}" class="btn btn-sm btn-info">Sửa</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+					<div class="card-footer clearfix">
+						<div th:if="${#lists.isEmpty(inventories)}" class="alert alert-info mb-0">Không có dữ liệu tồn kho nào được tìm thấy.</div>
+
+						<nav th:if="${inventoryPage.totalPages > 0}">
+							<ul class="pagination m-0 float-end">
+								<li class="page-item" th:classappend="${inventoryPage.first ? 'disabled' : ''}">
+									<a class="page-link" th:href="@{/admin/inventory(page=${currentPage - 1}, size=${inventoryPage.size}, branchId=${selectedBranchId}, keyword=${keyword})}">Previous</a>
+								</li>
+								<li class="page-item" th:each="i : ${#numbers.sequence(0, inventoryPage.totalPages - 1)}"
+									th:classappend="${i == currentPage ? 'active' : ''}">
+									<a class="page-link" th:text="${i + 1}" th:href="@{/admin/inventory(page=${i}, size=${inventoryPage.size}, branchId=${selectedBranchId}, keyword=${keyword})}">1</a>
+								</li>
+								<li class="page-item" th:classappend="${inventoryPage.last ? 'disabled' : ''}">
+									<a class="page-link" th:href="@{/admin/inventory(page=${currentPage + 1}, size=${inventoryPage.size}, branchId=${selectedBranchId}, keyword=${keyword})}">Next</a>
+								</li>
+							</ul>
+						</nav>
+					</div>
+				</div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/admin/footer :: footer}"></div>
+    
+</div> <div th:replace="~{fragments/admin/footer :: footer-scripts}"></div>
+<script th:replace="~{admin/home :: script-active-sidebar}"></script>
+
+</body>
+</html>

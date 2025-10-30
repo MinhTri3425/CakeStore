@@ -18,6 +18,8 @@
 					th:text="${isEdit ? 'Chỉnh sửa: ' + user.email : 'Thêm Tài khoản Mới'}"
 					class="mb-4"></h2>
 
+				<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
 				<form th:action="@{/admin/users}" th:object="${user}" method="post">
 					<input type="hidden" th:if="${isEdit}" th:field="*{id}" />
 
@@ -46,14 +48,50 @@
 
 					<div class="mb-3">
 						<label class="form-label">Vai trò (Role)</label> <select
-							th:field="*{role}" class="form-select">
+							th:field="*{role}" class="form-select" id="roleSelect">
 							<option th:each="r : ${availableRoles}" th:value="${r}"
 								th:text="${r}">customer</option>
 						</select>
 					</div>
-
-					<div class="mb-3 form-check">
-						<!-- DÙNG *{active} -->
+                    
+                    <div class="mb-3" id="branchSelectContainer" style="display:none;">
+                        <label class="form-label">Chi nhánh (Bắt buộc cho Staff)</label>
+                        <select name="branchId" id="branchIdSelect" class="form-select">
+                            <option value="">-- Chọn chi nhánh --</option>
+                            <option th:each="b : ${branches}" th:value="${b.id}"
+                                    th:text="${b.code + ' - ' + b.name}"
+                                    th:selected="${user.branch != null && user.branch.id == b.id}">
+                            </option>
+                        </select>
+                    </div>
+                    <h5 class="mt-4">Địa chỉ Mặc định (Tùy chọn)</h5>
+                    <div th:with="defaultAddr=${user.getDefaultAddress()}">
+                        <div class="row">
+                            <div class="mb-3 col-md-6">
+                                <label for="city" class="form-label">Thành phố</label>
+                                <input type="text" name="city" id="city" class="form-control" 
+                                    th:value="${isEdit and defaultAddr != null ? defaultAddr.city : ''}" /> </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="district" class="form-label">Quận/Huyện</label>
+                                <input type="text" name="district" id="district" class="form-control" 
+                                    th:value="${isEdit and defaultAddr != null ? defaultAddr.district : ''}" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="mb-3 col-md-6">
+                                <label for="ward" class="form-label">Phường/Xã</label>
+                                <input type="text" name="ward" id="ward" class="form-control" 
+                                    th:value="${isEdit and defaultAddr != null ? defaultAddr.ward : ''}" />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="line1" class="form-label">Số nhà, Tên đường</label>
+                                <input type="text" name="line1" id="line1" class="form-control" 
+                                    th:value="${isEdit and defaultAddr != null ? defaultAddr.line1 : ''}" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
 						<input type="checkbox" th:field="*{active}"
 							class="form-check-input" id="isActive"> <label
 							class="form-check-label" for="isActive">Kích hoạt</label>
@@ -69,5 +107,29 @@
 
 	<div th:replace="~{fragments/footer :: footer}"></div>
 	<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
-</body>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const roleSelect = document.getElementById('roleSelect');
+            const branchContainer = document.getElementById('branchSelectContainer');
+            const branchSelect = document.getElementById('branchIdSelect');
+
+            function toggleBranchSelect() {
+                if (roleSelect.value === 'staff') {
+                    branchContainer.style.display = 'block';
+                    branchSelect.required = true;
+                } else {
+                    branchContainer.style.display = 'none';
+                    branchSelect.required = false;
+                }
+            }
+            
+            // Toggle khi tải trang
+            toggleBranchSelect(); 
+            
+            // Toggle khi đổi Role
+            roleSelect.addEventListener('change', toggleBranchSelect);
+        });
+    </script>
+    </body>
 </html>

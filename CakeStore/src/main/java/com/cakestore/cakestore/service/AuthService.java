@@ -1,3 +1,4 @@
+// src/main/java/com/cakestore/cakestore/service/AuthService.java
 package com.cakestore.cakestore.service;
 
 import com.cakestore.cakestore.entity.User;
@@ -30,13 +31,15 @@ public class AuthService implements UserDetailsService {
 
         // Kiểm tra tài khoản có bị khóa không
         if (!user.isActive()) {
-            throw new UsernameNotFoundException("User is inactive/locked: " + email);
+            throw new UsernameNotFoundException("Tài khoản đã bị khóa: " + email);
         }
-
+        
+        // Trả về UserDetails chuẩn của Spring
+        // Spring sẽ tự động dùng PasswordEncoder để so sánh mật khẩu
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
-                user.getPasswordHash(),
-                getAuthorities(user.getRole())
+                user.getPasswordHash(), // Đây là mật khẩu đã mã hóa
+                getAuthorities(user.getRole()) // Đây là quyền
         );
     }
 
@@ -47,9 +50,7 @@ public class AuthService implements UserDetailsService {
         Set<String> roles = Set.of(role.toUpperCase());
 
         return roles.stream()
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                .map(r -> new SimpleGrantedAuthority("ROLE_" + r)) // QUAN TRỌNG: Thêm tiền tố "ROLE_"
                 .collect(Collectors.toList());
     }
-
-    // TODO: Triển khai các phương thức liên quan đến JWT (tạo, validate token) tại đây
 }

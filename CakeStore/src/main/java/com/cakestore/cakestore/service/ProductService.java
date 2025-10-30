@@ -9,6 +9,6 @@ public interface ProductService {
     Product getProductById(Long id);
     Product saveProduct(Product product);
     void deleteProduct(Long id);
-    Product getProductForEdit(Long id);
+    Product getProductForEdit(Long id); // <--- THÊM DÒNG NÀY
     
 }

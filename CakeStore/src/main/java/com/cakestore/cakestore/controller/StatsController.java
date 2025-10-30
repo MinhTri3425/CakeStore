@@ -1,4 +1,4 @@
-// CakeStore/src/main/java/com/cakestore/cakestore/controller/StatsController.java
+// src/main/java/com/cakestore/cakestore/controller/StatsController.java
 package com.cakestore.cakestore.controller;
 
 import com.cakestore.cakestore.service.StatsService;
@@ -19,10 +19,8 @@ public class StatsController {
 
     @GetMapping
     public String showStatsDashboard(Model model) {
+        // This correctly gets the detailed stats map, including the processed revenue data
         model.addAllAttributes(statsService.getDetailedStats());
-        
-        // Dữ liệu cho trang thống kê chi tiết (vd: revenueLabels, revenueData đã được thêm từ service)
-
         return "admin/stats";
     }
 }

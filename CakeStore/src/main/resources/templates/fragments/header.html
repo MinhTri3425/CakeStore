@@ -4,7 +4,9 @@
     
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" th:href="@{/admin/home}">CakeStore Admin</a>
+            <a class="navbar-brand" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/home}">CakeStore Admin</a>
+            <a class="navbar-brand" sec:authorize="hasRole('STAFF')" th:href="@{/staff/home}">CakeStore Staff</a>
+            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -15,7 +17,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" th:href="@{/admin/orders}">Đơn hàng</a>
-                        </li>
+                    </li>
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                         <a class="nav-link" th:href="@{/admin/users}">Users/Staff</a>
                     </li>

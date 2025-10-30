@@ -29,7 +29,7 @@
                             <th>ID</th>
                             <th>Mã Code</th>
                             <th>Tên Chi nhánh</th>
-                            <th>Địa chỉ</th>
+                            <th>Manager</th> <th>Địa chỉ</th>
                             <th>SĐT</th>
                             <th>Trạng thái</th>
                             <th>Thao tác</th>
@@ -40,6 +40,9 @@
                             <td th:text="${branch.id}">1</td>
                             <td th:text="${branch.code}">HCM-Q1</td>
                             <td th:text="${branch.name}">Chi nhánh Quận 1</td>
+                            
+                            <td th:text="${branch.manager != null ? branch.manager.fullName : '—'}">Nguyễn Văn A</td>
+
                             <td th:text="${branch.line1} + ' - ' + ${branch.city}">123 Đường ABC - TP HCM</td>
                             <td th:text="${branch.phone}">0901234567</td>
                             <td>

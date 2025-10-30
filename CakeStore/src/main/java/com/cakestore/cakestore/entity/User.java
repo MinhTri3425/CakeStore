@@ -1,3 +1,4 @@
+// src/main/java/com/cakestore/cakestore/entity/User.java
 package com.cakestore.cakestore.entity;
 
 import jakarta.persistence.*;
@@ -29,12 +30,22 @@ public class User {
     @Column(name = "FullName", nullable = false, columnDefinition = "NVARCHAR(150)")
     private String fullName;
 
-    /** customer/admin/shipper — ràng buộc bằng CHECK ở DB */
+    /** customer/admin/staff */
     @Column(name = "Role", nullable = false, length = 20)
     private String role = "customer";
 
     @Column(name = "IsActive", nullable = false)
     private boolean isActive = true;
+
+    // ===== THÊM MỚI LIÊN KẾT CHI NHÁNH =====
+    /**
+     * Staff thuộc chi nhánh nào?
+     * NULL cho Admin và Customer.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "BranchId")
+    private Branch branch;
+    // =====================================
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -74,7 +85,6 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<Order> orders = new LinkedHashSet<>();
 
-    // Nếu dùng vai trò shipper: gán vào phân công giao hàng
     @OneToMany(mappedBy = "shipper", fetch = FetchType.LAZY)
     private Set<ShipAssignment> shipAssignments = new LinkedHashSet<>();
 
@@ -90,172 +100,78 @@ public class User {
     }
 
     /* ================= Getters/Setters ================= */
+    
+    // ... (Toàn bộ Getters/Setters cũ giữ nguyên) ...
 
-    public Long getId() {
-        return id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public Set<Address> getAddresses() { return addresses; }
+    public void setAddresses(Set<Address> addresses) { this.addresses = addresses; }
+    public Set<OtpToken> getOtpTokens() { return otpTokens; }
+    public void setOtpTokens(Set<OtpToken> otpTokens) { this.otpTokens = otpTokens; }
+    public Set<RefreshToken> getRefreshTokens() { return refreshTokens; }
+    public void setRefreshTokens(Set<RefreshToken> refreshTokens) { this.refreshTokens = refreshTokens; }
+    public Set<Favorite> getFavorites() { return favorites; }
+    public void setFavorites(Set<Favorite> favorites) { this.favorites = favorites; }
+    public Set<RecentlyViewed> getRecentlyViewed() { return recentlyViewed; }
+    public void setRecentlyViewed(Set<RecentlyViewed> recentlyViewed) { this.recentlyViewed = recentlyViewed; }
+    public Set<Review> getReviews() { return reviews; }
+    public void setReviews(Set<Review> reviews) { this.reviews = reviews; }
+    public Set<Comment> getComments() { return comments; }
+    public void setComments(Set<Comment> comments) { this.comments = comments; }
+    public Set<CouponUsage> getCouponUsages() { return couponUsages; }
+    public void setCouponUsages(Set<CouponUsage> couponUsages) { this.couponUsages = couponUsages; }
+    public Set<Cart> getCarts() { return carts; }
+    public void setCarts(Set<Cart> carts) { this.carts = carts; }
+    public Set<Order> getOrders() { return orders; }
+    public void setOrders(Set<Order> orders) { this.orders = orders; }
+    public Set<ShipAssignment> getShipAssignments() { return shipAssignments; }
+    public void setShipAssignments(Set<ShipAssignment> shipAssignments) { this.shipAssignments = shipAssignments; }
+
+    // ===== GETTER/SETTER CHO CHI NHÁNH =====
+    public Branch getBranch() {
+        return branch;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setBranch(Branch branch) {
+        this.branch = branch;
     }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public Set<Address> getAddresses() {
-        return addresses;
-    }
-
-    public void setAddresses(Set<Address> addresses) {
-        this.addresses = addresses;
-    }
-
-    public Set<OtpToken> getOtpTokens() {
-        return otpTokens;
-    }
-
-    public void setOtpTokens(Set<OtpToken> otpTokens) {
-        this.otpTokens = otpTokens;
-    }
-
-    public Set<RefreshToken> getRefreshTokens() {
-        return refreshTokens;
-    }
-
-    public void setRefreshTokens(Set<RefreshToken> refreshTokens) {
-        this.refreshTokens = refreshTokens;
-    }
-
-    public Set<Favorite> getFavorites() {
-        return favorites;
-    }
-
-    public void setFavorites(Set<Favorite> favorites) {
-        this.favorites = favorites;
-    }
-
-    public Set<RecentlyViewed> getRecentlyViewed() {
-        return recentlyViewed;
-    }
-
-    public void setRecentlyViewed(Set<RecentlyViewed> recentlyViewed) {
-        this.recentlyViewed = recentlyViewed;
-    }
-
-    public Set<Review> getReviews() {
-        return reviews;
-    }
-
-    public void setReviews(Set<Review> reviews) {
-        this.reviews = reviews;
-    }
-
-    public Set<Comment> getComments() {
-        return comments;
-    }
-
-    public void setComments(Set<Comment> comments) {
-        this.comments = comments;
-    }
-
-    public Set<CouponUsage> getCouponUsages() {
-        return couponUsages;
-    }
-
-    public void setCouponUsages(Set<CouponUsage> couponUsages) {
-        this.couponUsages = couponUsages;
-    }
-
-    public Set<Cart> getCarts() {
-        return carts;
-    }
-
-    public void setCarts(Set<Cart> carts) {
-        this.carts = carts;
-    }
-
-    public Set<Order> getOrders() {
-        return orders;
-    }
-
-    public void setOrders(Set<Order> orders) {
-        this.orders = orders;
-    }
-
-    public Set<ShipAssignment> getShipAssignments() {
-        return shipAssignments;
-    }
-
-    public void setShipAssignments(Set<ShipAssignment> shipAssignments) {
-        this.shipAssignments = shipAssignments;
-    }
+    // =====================================
 
     /* ================= equals/hashCode theo Id ================= */
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof User other))
-            return false;
+        if (this == o) return true;
+        if (!(o instanceof User other)) return false;
         return id != null && id.equals(other.id);
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    @Transient
+    public Address getDefaultAddress() {
+        if (addresses == null) return null;
+        return addresses.stream()
+            .filter(Address::isDefault)
+            .findFirst()
+            .orElse(null);
     }
 }

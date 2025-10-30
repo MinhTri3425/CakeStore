@@ -1,9 +1,11 @@
+// src/main/java/com/cakestore/cakestore/service/impl/BranchServiceImpl.java
 package com.cakestore.cakestore.service.impl;
 
 import com.cakestore.cakestore.entity.Branch;
 import com.cakestore.cakestore.repository.BranchRepository;
 import com.cakestore.cakestore.service.BranchService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Thêm import
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,26 +19,31 @@ public class BranchServiceImpl implements BranchService {
     }
 
     @Override
+    @Transactional(readOnly = true) // Thêm Transactional
     public List<Branch> findAllActive() {
-        return branchRepository.findAll().stream()
-                .filter(Branch::isActive)
-                .collect(Collectors.toList());
+        // CẬP NHẬT: Gọi phương thức mới để fetch manager
+        return branchRepository.findAllByIsActiveTrue();
     }
 
     @Override
+    @Transactional(readOnly = true) // Thêm Transactional
     public Branch findById(Long id) {
-        return branchRepository.findById(id).orElse(null);
+        // CẬP NHẬT: Fetch cả manager khi sửa
+        return branchRepository.findById(id).map(b -> {
+            if (b.getManager() != null) {
+                b.getManager().getFullName(); // Tải manager (chỉ cần gọi 1 hàm)
+            }
+            return b;
+        }).orElse(null);
     }
 
     @Override
     public Branch save(Branch branch) {
-        // Cần thêm validation logic (ví dụ: code không trùng)
         return branchRepository.save(branch);
     }
 
     @Override
     public void deleteById(Long id) {
-        // Nên cân nhắc đổi sang set isActive = false thay vì xóa cứng
         branchRepository.deleteById(id);
     }
     

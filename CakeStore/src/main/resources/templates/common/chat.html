@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Nội bộ</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        .chat-layout { display: flex; height: 75vh; }
+        .user-list { width: 250px; border-right: 1px solid #ddd; overflow-y: auto; padding: 0; background-color: #f8f9fa; }
+        .user-list .list-group-item { cursor: pointer; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; border-bottom: 1px solid #e9ecef; }
+        .user-list .list-group-item:last-child { border-bottom: 0; }
+        .user-list .list-group-item.active { background-color: #0d6efd; color: white; font-weight: bold; border-left: 3px solid #0a58ca; }
+        .user-list .list-group-item.new-message { font-weight: bold; background-color: #cfe2ff; } /* Style for new message indicator */
+        .chat-main { flex-grow: 1; display: flex; flex-direction: column; }
+        .chat-header { padding: 10px 15px; border-bottom: 1px solid #ddd; background-color: #f8f9fa;}
+        .chat-container { flex-grow: 1; display: flex; flex-direction: column; border: 1px solid #ddd; border-top: 0; border-right: 0; border-bottom: 0; border-left: 0;}
+        .chat-messages { flex-grow: 1; overflow-y: auto; padding: 15px; background-color: #ffffff; }
+        .chat-input { padding: 10px; border-top: 1px solid #ddd; background-color: #f8f9fa; }
+        .message-bubble { max-width: 75%; padding: 8px 12px; border-radius: 15px; margin-bottom: 8px; word-wrap: break-word; line-height: 1.4; }
+        .message-self { background-color: #007bff; color: white; margin-left: auto; border-bottom-right-radius: 2px; }
+        .message-other { background-color: #e9ecef; color: #333; margin-right: auto; border-bottom-left-radius: 2px; }
+        .message-info { font-size: 0.75rem; text-align: center; color: #6c757d; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+     <div class="container-fluid mt-4">
+         <div class="row">
+             <div th:replace="~{admin/home :: sidebar}"></div> <div class="col-md-9">
+                 <h2 class="mb-4">Chat Nội bộ</h2>
+                 <div class="chat-layout shadow-sm bg-white">
+                     <div class="user-list">
+                         <div class="list-group list-group-flush">
+                             <a th:each="user : ${internalUsers}"
+                                th:data-email="${user.email}"
+                                th:data-fullname="${user.fullName}"
+                                class="list-group-item list-group-item-action user-select-item"
+                                th:classappend="${user.email == defaultReceiver} ? 'active' : ''"> <span th:text="${user.fullName}">User FullName</span>
+                                 <small class="d-block text-muted" th:text="${user.email}">user@example.com</small>
+                             </a>
+                             <div th:if="${#lists.isEmpty(internalUsers)}" class="p-3 text-muted text-center">
+                                 Không tìm thấy người dùng nội bộ khác.
+                             </div>
+                         </div>
+                     </div>
+
+                     <div class="chat-main">
+                         <div class="chat-header">
+                             Chat với: <strong id="currentChatUserName">Chưa chọn</strong>
+                             (<small id="currentChatUserEmail"></small>)
+                         </div>
+                         <div class="chat-container">
+                             <div class="chat-messages" id="messageArea">
+                                 </div>
+                             <form id="chatForm" class="chat-input d-flex">
+                                 <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." class="form-control me-2" autocomplete="off" required disabled/>
+                                 <button type="submit" class="btn btn-primary" id="sendButton" disabled>Gửi</button>
+                             </form>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+     </div>
+
+     <div th:replace="~{fragments/footer :: footer}"></div>
+
+     <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+     <script th:inline="javascript">
+      /*<![CDATA[*/
+       // Lấy email user hiện tại từ model (do Controller truyền sang)
+       const currentUser = /*[[${currentUserEmail}]]*/ 'CurrentUser';
+       const PRIVATE_CHAT_URL = '/app/chat.private';
+       let stompClient = null;
+       let currentReceiver = null; // Sẽ được đặt trong DOMContentLoaded
+
+       // DOM Elements
+       const messageArea = document.getElementById('messageArea');
+       const chatInput = document.getElementById('chatInput');
+       const sendButton = document.getElementById('sendButton');
+       const currentChatUserName = document.getElementById('currentChatUserName');
+       const currentChatUserEmail = document.getElementById('currentChatUserEmail');
+       const userListItems = document.querySelectorAll('.user-select-item');
+
+       function connect() {
+           console.log("Attempting to connect WebSocket...");
+           try {
+                // *** SỬA LỖI 1: Quay lại dùng URL tương đối ***
+                const socket = new SockJS('/ws');
+                stompClient = Stomp.over(socket);
+                stompClient.connect({}, onConnected, onError);
+           } catch (error) {
+               console.error("Failed to create SockJS connection:", error);
+               displayInfoMessage("Không thể khởi tạo kết nối WebSocket. " + (error.message || ''), true);
+               disableChatInput();
+           }
+       }
+
+       function onConnected() {
+           if (!stompClient || !stompClient.connected) {
+                console.error("onConnected called but STOMP client is not connected.");
+                onError("Kết nối STOMP không thành công sau khi SockJS kết nối.");
+                return;
+           }
+           try {
+               stompClient.subscribe(`/user/${currentUser}/queue/messages`, onPrivateMessageReceived);
+               console.log("Connected to Chat. Subscribed to user queue: /user/" + currentUser + "/queue/messages");
+               displayInfoMessage("Đã kết nối với hệ thống Chat...");
+               // *** SỬA LỖI 2: Gọi enableChatInput() sau khi đã kết nối thành công ***
+               enableChatInput();
+               console.log("Chat input enabled (if receiver selected).");
+           } catch (error) {
+               console.error("Error during STOMP subscription:", error);
+               onError("Lỗi đăng ký nhận tin nhắn: " + (error.message || 'Unknown error'));
+           }
+       }
+
+
+       function onError(error) {
+           console.error('WebSocket/STOMP Connection Error.', error);
+           let errorMessage = 'Lỗi kết nối WebSocket.';
+           if (typeof error === 'string') {
+               errorMessage += ` Chi tiết: ${error}`;
+           } else if (error?.headers?.message) {
+                errorMessage += ` Chi tiết: ${error.headers.message}`;
+           } else if (error?.message) {
+                 errorMessage += ` Chi tiết: ${error.message}`;
+           } else {
+               errorMessage += ' Vui lòng kiểm tra Developer Console (F12) để biết thêm chi tiết.';
+           }
+           displayInfoMessage(errorMessage, true);
+           disableChatInput();
+       }
+
+
+       function onPrivateMessageReceived(payload) {
+           console.error("<<< MESSAGE RECEIVED BY BROWSER >>>", payload); // Giữ log này lại
+           try {
+               const message = JSON.parse(payload.body);
+               console.log("Parsed Message: ", message);
+
+               console.log(`CHECKING DISPLAY CONDITION: message.sender [${message.sender}] === currentReceiver [${currentReceiver}]`);
+               // Chỉ hiển thị nếu tin nhắn LÀ TỪ người đang chat
+               if (message.sender === currentReceiver) {
+                   console.log("Displaying received message:", message);
+                   displayMessage(message);
+               } else {
+                   console.warn("Message sender doesn't match current chat, not displaying directly.");
+                   const senderItem = document.querySelector(`.user-select-item[data-email="${message.sender}"]`);
+                   if (senderItem && !senderItem.classList.contains('active')) {
+                      senderItem.classList.add('new-message');
+                   }
+               }
+           } catch (e) {
+               console.error("Error parsing received message:", e);
+               displayInfoMessage("Lỗi xử lý tin nhắn nhận được.", true);
+           }
+       }
+
+       function sendMessage(event) {
+           event.preventDefault();
+           const content = chatInput.value.trim();
+
+           if (!stompClient || !stompClient.connected) {
+               console.error("Cannot send message. STOMP client not connected.");
+               displayInfoMessage("Mất kết nối. Vui lòng thử tải lại trang.", true);
+               return;
+           }
+           if (!currentReceiver) {
+                console.error("Cannot send message. No receiver selected.");
+                displayInfoMessage("Vui lòng chọn người nhận trước khi gửi.", true);
+                return;
+           }
+           if (!content) {
+               return; // Không gửi tin nhắn trống
+           }
+
+           const chatMessage = {
+               sender: currentUser,
+               receiver: currentReceiver,
+               content: content
+           };
+           stompClient.send(PRIVATE_CHAT_URL, {}, JSON.stringify(chatMessage));
+           console.log("Message sent to " + currentReceiver + ": ", chatMessage);
+
+           displayMessage({...chatMessage, sentAt: new Date().toISOString()}); // Hiển thị ngay
+           chatInput.value = '';
+       }
+
+       function displayMessage(message) {
+           const messageElement = document.createElement('div');
+           const isSelf = message.sender === currentUser;
+           messageElement.classList.add('message-bubble', isSelf ? 'message-self' : 'message-other');
+
+           const senderName = isSelf ? 'Bạn' : (document.querySelector(`.user-select-item[data-email="${message.sender}"]`)?.dataset.fullname || message.sender);
+           const senderPrefix = isSelf ? '' : `<strong>${senderName}:</strong> `;
+           const sanitizedContent = message.content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+           messageElement.innerHTML = `${senderPrefix}${sanitizedContent}`;
+
+           messageArea.appendChild(messageElement);
+           setTimeout(() => { messageArea.scrollTop = messageArea.scrollHeight; }, 0); // Cuộn xuống
+       }
+
+
+       function displayInfoMessage(text, isError = false) {
+            const infoElement = document.createElement('div');
+            infoElement.classList.add('message-info');
+            if (isError) {
+                infoElement.classList.add('text-danger');
+            }
+            infoElement.textContent = text;
+            messageArea.appendChild(infoElement);
+             setTimeout(() => { messageArea.scrollTop = messageArea.scrollHeight; }, 0);
+       }
+
+       // Hàm cập nhật trạng thái chat (chọn người, cập nhật UI)
+       function setActiveChatUser(userItemElement) {
+            if (!userItemElement) {
+                console.warn("setActiveChatUser called with null element");
+                disableChatInput(); // Vô hiệu hóa nếu không có ai được chọn
+                currentReceiver = null;
+                return;
+            }
+
+            const newReceiverEmail = userItemElement.dataset.email;
+            const newReceiverName = userItemElement.dataset.fullname;
+
+            // Cập nhật class active
+            userListItems.forEach(item => item.classList.remove('active', 'new-message'));
+            userItemElement.classList.add('active');
+
+            // Cập nhật biến global và header
+            currentReceiver = newReceiverEmail;
+            currentChatUserName.textContent = newReceiverName || 'N/A';
+            currentChatUserEmail.textContent = currentReceiver;
+
+            // Xóa nội dung cũ, hiển thị thông báo, bật input
+            messageArea.innerHTML = '';
+            displayInfoMessage(`Bắt đầu trò chuyện với ${newReceiverName || currentReceiver}...`);
+            enableChatInput(); // Gọi enableChatInput sau khi đã set currentReceiver
+            chatInput.focus();
+
+            console.log("Switched chat to: ", currentReceiver);
+       }
+
+       // Hàm được gọi khi click chọn user
+       function selectUser(event) {
+            const selectedItem = event.currentTarget;
+            if (selectedItem.dataset.email !== currentReceiver) {
+                setActiveChatUser(selectedItem);
+                // TODO: (Optional) Tải lịch sử chat
+            }
+       }
+
+
+       function enableChatInput() {
+           // *** SỬA LỖI 2: Chỉ kiểm tra `currentReceiver` VÀ `stompClient.connected` ***
+           if(currentReceiver && stompClient && stompClient.connected) {
+               chatInput.disabled = false;
+               sendButton.disabled = false;
+               console.log(`Input ENABLED for receiver: ${currentReceiver}`);
+           } else {
+               chatInput.disabled = true;
+               sendButton.disabled = true;
+               console.log(`Input remains DISABLED. Receiver: ${currentReceiver}, Connected: ${stompClient?.connected}`);
+           }
+       }
+
+
+       function disableChatInput() {
+           chatInput.disabled = true;
+           sendButton.disabled = true;
+           // Đặt lại header khi không có ai được chọn hoặc mất kết nối
+           currentChatUserName.textContent = 'Chưa chọn';
+           currentChatUserEmail.textContent = '(Mất kết nối)';
+           if(currentReceiver) {
+               currentChatUserEmail.textContent = `(${currentReceiver} - Mất kết nối)`;
+           }
+           console.log("Chat input DISABLED.");
+       }
+
+       document.addEventListener('DOMContentLoaded', function() {
+           console.log("DOM Content Loaded. Current User:", currentUser);
+
+           // Kiểm tra thư viện
+           if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+               console.error('SockJS or Stomp library not loaded!');
+               displayInfoMessage('Lỗi tải thư viện chat. Vui lòng kiểm tra kết nối mạng hoặc liên hệ quản trị viên.', true);
+               disableChatInput();
+               return;
+           }
+
+           // Gắn sự kiện submit form
+           document.getElementById('chatForm').addEventListener('submit', sendMessage);
+
+           // Gắn sự kiện click cho danh sách user
+           userListItems.forEach(item => {
+               item.addEventListener('click', selectUser);
+           });
+
+           // --- SỬA LỖI 2: Logic khởi tạo ---
+           let initialActiveItem = document.querySelector('.user-select-item.active'); 
+           if (!initialActiveItem && userListItems.length > 0) {
+               initialActiveItem = userListItems[0]; // Mặc định chọn người đầu tiên
+               initialActiveItem.classList.add('active'); // Thêm active cho người đầu tiên
+           }
+
+           if (initialActiveItem) {
+               // Đặt giá trị ban đầu cho currentReceiver và UI header
+               // KHÔNG gọi enableChatInput() ở đây
+               currentReceiver = initialActiveItem.dataset.email;
+               currentChatUserName.textContent = initialActiveItem.dataset.fullname || 'N/A';
+               currentChatUserEmail.textContent = currentReceiver;
+               console.log("Initial receiver set to:", currentReceiver);
+               displayInfoMessage(`Bắt đầu trò chuyện với ${currentReceiver}...`);
+               
+               // Bắt đầu kết nối
+               connect();
+           } else {
+               // Không có user nào trong danh sách
+               console.log("No internal users found in the list.");
+               displayInfoMessage("Không có người dùng nào khác để chat.");
+               disableChatInput(); // Vô hiệu hóa vì không có ai để chat
+           }
+           // --- Kết thúc logic khởi tạo ---
+       });
+      /*]]>*/
+     </script>
+</body>
+</html>

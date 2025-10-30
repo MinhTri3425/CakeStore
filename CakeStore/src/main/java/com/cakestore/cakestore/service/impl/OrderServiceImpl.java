@@ -1,18 +1,19 @@
-// CakeStore/src/main/java/com/cakestore/cakestore/service/impl/OrderServiceImpl.java
+// src/main/java/com/cakestore/cakestore/service/impl/OrderServiceImpl.java
 package com.cakestore.cakestore.service.impl;
 
-import com.cakestore.cakestore.entity.*; // Import all
+import com.cakestore.cakestore.entity.*;
 import com.cakestore.cakestore.entity.Order.OrderStatus;
 import com.cakestore.cakestore.entity.Order.PaymentMethod;
 import com.cakestore.cakestore.repository.OrderRepository;
-import com.cakestore.cakestore.repository.UserRepository; // Thêm UserRepository
-import com.cakestore.cakestore.repository.BranchRepository; // Thêm BranchRepository
-import com.cakestore.cakestore.repository.ProductRepository; // Thêm ProductRepository
+import com.cakestore.cakestore.repository.UserRepository;
+import com.cakestore.cakestore.repository.BranchRepository;
+import com.cakestore.cakestore.repository.ProductRepository;
 import com.cakestore.cakestore.service.OrderService;
-import com.cakestore.cakestore.service.InventoryService; // Thêm InventoryService
+import com.cakestore.cakestore.service.InventoryService;
 import org.springframework.data.domain.Page;
+// import org.springframework.data.domain.PageImpl; // Không cần nữa
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder; // Thêm PasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class OrderServiceImpl implements OrderService {
     private final InventoryService inventoryService;
     private final PasswordEncoder passwordEncoder;
 
+    // ... (Constructor giữ nguyên) ...
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository, 
                             BranchRepository branchRepository, ProductRepository productRepository, 
                             InventoryService inventoryService, PasswordEncoder passwordEncoder) {
@@ -41,15 +43,19 @@ public class OrderServiceImpl implements OrderService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
-    public Page<Order> findOrders(String orderStatus, Pageable pageable) {
-        // TODO: Viết custom method trong Repository để lọc theo Status
-        return orderRepository.findAll(pageable);
-    }
 
+    // ... (findById, updateStatus, createManualOrder giữ nguyên) ...
     @Override
+    @Transactional(readOnly = true)
     public Order findById(Long id) {
-        return orderRepository.findById(id).orElse(null);
+        return orderRepository.findById(id)
+                .map(order -> {
+                    if (order.getUser() != null) order.getUser().getFullName();
+                    if (order.getAddress() != null) order.getAddress().getLine1();
+                    order.getItems().size();
+                    return order;
+                })
+                .orElse(null);
     }
     
     @Override
@@ -57,16 +63,10 @@ public class OrderServiceImpl implements OrderService {
     public Order updateStatus(Long id, OrderStatus newStatus) {
         return orderRepository.findById(id).map(order -> {
             order.setStatus(newStatus);
-            // UpdatedAt được DB quản lý
-            // TODO: Thêm logic nghiệp vụ khi chuyển trạng thái (ví dụ: tạo Fulfillment khi chuyển sang SHIPPING)
             return orderRepository.save(order);
         }).orElse(null);
     }
 
-    /**
-     * TẠO ĐƠN HÀNG MỚI (Admin/Staff tự nhập)
-     * Đây là logic phức tạp, cần xử lý nhiều Entity cùng lúc.
-     */
     @Override
     @Transactional
     public Order createManualOrder(Long branchId, String customerEmail, String fullName, 
@@ -74,37 +74,27 @@ public class OrderServiceImpl implements OrderService {
                                    PaymentMethod paymentMethod, String note, 
                                    List<OrderItem> rawItems, BigDecimal total) {
         
-        // 1. TÌM HOẶC TẠO USER (Khách hàng)
         User user = userRepository.findByEmail(customerEmail).orElseGet(() -> {
-            // Nếu khách hàng không tồn tại, tạo User mới (password ngẫu nhiên/default)
             User newUser = new User(customerEmail, passwordEncoder.encode("CKS"+System.currentTimeMillis()), fullName);
             newUser.setRole("customer");
             newUser.setPhone(phone);
             return userRepository.save(newUser);
         });
 
-        // 2. TÌM BRANCH
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("Chi nhánh không hợp lệ."));
 
-        // 3. TẠO ADDRESS (Tạo mới mỗi lần vì là đơn thủ công/địa chỉ mới)
         Address address = new Address(user, fullName, phone, line1, city);
-        // addressRepository.save(address); // Giả định Address được lưu cascade từ User hoặc Order
-
-        // 4. TẠO ORDER MỚI
         Order order = new Order(user, branch);
-        order.setAddress(address); // Gắn địa chỉ
+        order.setAddress(address);
         order.setPaymentMethod(paymentMethod);
         order.setNote(note);
-        
-        order.setShippingFee(BigDecimal.ZERO); // Giả định Shipping Fee = 0 cho đơn tạo thủ công
-        order.setDiscount(BigDecimal.ZERO);    // Giả định Discount = 0 cho đơn tạo thủ công
+        order.setShippingFee(BigDecimal.ZERO);
+        order.setDiscount(BigDecimal.ZERO);
         order.setTotal(total);
-        order.setSubtotal(total); // Tạm thời Subtotal = Total (Không tính phí ship, discount)
-        
-        order.setStatus(OrderStatus.CONFIRMED); // Mặc định đơn tạo thủ công là CONFIRMED (đã được xác nhận)
+        order.setSubtotal(total);
+        order.setStatus(OrderStatus.CONFIRMED);
 
-        // 5. TẠO ORDER ITEMS VÀ TÍNH TOÁN LẠI TỔNG TIỀN CHÍNH XÁC (Backend validation)
         BigDecimal calculatedTotal = BigDecimal.ZERO;
         order.setItems(new LinkedHashSet<>());
 
@@ -112,26 +102,23 @@ public class OrderServiceImpl implements OrderService {
             Product product = productRepository.findById(rawItem.getProduct().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại: " + rawItem.getProduct().getId()));
             
-            // Tạo OrderItem chính xác
             OrderItem item = new OrderItem(
                 order, 
                 product, 
                 null, // Bỏ qua Variant
                 rawItem.getQuantity(), 
-                rawItem.getUnitPrice(), // Lấy đơn giá từ form (cần tính lại nếu có discount)
+                rawItem.getUnitPrice(),
                 rawItem.getNameSnapshot()
             );
             
             calculatedTotal = calculatedTotal.add(item.getLineTotal());
             order.addItem(item);
 
-            // 6. CẬP NHẬT TỒN KHO (Giữ chỗ - Reserved)
             if (item.getQuantity() > 0) {
                  inventoryService.increaseReserved(branchId, product.getId(), item.getQuantity());
             }
         }
         
-        // Cập nhật lại tổng tiền chính xác từ các OrderItem
         order.setSubtotal(calculatedTotal);
         order.setTotal(calculatedTotal);
         
@@ -141,4 +128,34 @@ public class OrderServiceImpl implements OrderService {
 
         return orderRepository.save(order);
     }
+
+    // XÓA PHƯƠNG THỨC CŨ
+	// @Override
+	// public Page<Order> findOrders(String orderStatus, Pageable pageable) {
+	// 	return null;
+	// }
+	
+    // CẬP NHẬT PHƯƠNG THỨC NÀY
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Order> findOrders(OrderStatus status, Long branchId, Pageable pageable) {
+        if (branchId != null) {
+            // Đây là Staff, lọc theo chi nhánh
+            if (status == null) {
+                return orderRepository.findByBranchId(branchId, pageable);
+            }
+            return orderRepository.findByStatusAndBranchId(status, branchId, pageable);
+        } else {
+            // Đây là Admin, thấy tất cả
+            if (status == null) {
+                return orderRepository.findAll(pageable);
+            }
+            return orderRepository.findByStatus(status, pageable);
+        }
+    }
+
+	@Override
+	public Order findByIdWithItems(Long id) {
+		return orderRepository.findByIdWithItems(id).orElse(null);
+	}
 }

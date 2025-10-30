@@ -3,6 +3,8 @@ package com.cakestore.cakestore.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -63,6 +65,7 @@ public class Coupon {
     @OneToMany(mappedBy = "coupon", fetch = FetchType.LAZY)
     private Set<OrderCoupon> orderCoupons = new LinkedHashSet<>();
 
+
     /* ===== Constructors ===== */
     public Coupon() {
     }
@@ -75,9 +78,13 @@ public class Coupon {
         this.endsAt = endsAt;
     }
 
-    /* ===== Getters/Setters ===== */
+    /* ===== Getters & Setters ===== */
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getCode() {
@@ -156,50 +163,63 @@ public class Coupon {
         return isActive;
     }
 
-    public void setActive(boolean active) {
-        isActive = active;
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public Set<CouponUsage> getCouponUsages() {
         return couponUsages;
+    }
+
+    public void setCouponUsages(Set<CouponUsage> couponUsages) {
+        this.couponUsages = couponUsages;
     }
 
     public Set<OrderCoupon> getOrderCoupons() {
         return orderCoupons;
     }
 
+    public void setOrderCoupons(Set<OrderCoupon> orderCoupons) {
+        this.orderCoupons = orderCoupons;
+    }
+
     /* ===== Helpers ===== */
     @Transient
     public boolean isActiveNow(LocalDateTime now) {
-        if (!isActive)
-            return false;
-        if (startsAt != null && now.isBefore(startsAt))
-            return false;
-        if (endsAt != null && now.isAfter(endsAt))
-            return false;
+        if (!isActive) return false;
+        if (startsAt != null && now.isBefore(startsAt)) return false;
+        if (endsAt != null && now.isAfter(endsAt)) return false;
         return quantity == null || quantity > 0;
+    }
+
+    // ✅ Overload cho Thymeleaf (nhận java.util.Date)
+    @Transient
+    public boolean isActiveNow(Date now) {
+        if (now == null) return false;
+        LocalDateTime localNow = now.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        return isActiveNow(localNow);
     }
 
     /** giảm quantity an toàn (>=0) */
     public void decQuantity(int n) {
-        if (n <= 0)
-            return;
-        if (this.quantity == null)
-            return;
+        if (n <= 0) return;
+        if (this.quantity == null) return;
         this.quantity = Math.max(0, this.quantity - n);
     }
 
     /* ===== equals/hashCode theo Id ===== */
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof Coupon that))
-            return false;
+        if (this == o) return true;
+        if (!(o instanceof Coupon that)) return false;
         return id != null && id.equals(that.id);
     }
 
@@ -208,7 +228,7 @@ public class Coupon {
         return Objects.hashCode(id);
     }
 
-    /* ===== Enum + Converter (khớp CHECK constraint) ===== */
+    /* ===== Enum + Converter ===== */
     public enum Type {
         PERCENT("PERCENT"),
         AMOUNT("AMOUNT"),

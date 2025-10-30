@@ -1,57 +1,73 @@
+// src/main/java/com/cakestore/cakestore/controller/AuthController.java
 package com.cakestore.cakestore.controller;
 
+import com.cakestore.cakestore.service.StatsService; 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model; // Đảm bảo đã import Model
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class AuthController {
-	@GetMapping("/")
+
+    private final StatsService statsService; 
+
+    public AuthController(StatsService statsService) {
+        this.statsService = statsService;
+    }
+
+    @GetMapping("/")
 	public String home() {
 	    return "redirect:/auth/login";
 	}
-    // Hiển thị trang đăng nhập
+
     @GetMapping("/auth/login")
     public String login() {
-        return "auth/login"; // Trả về template "auth/login.html"
+        return "auth/login";
     }
 
-    /**
-     * Chuyển hướng dựa trên Role sau khi đăng nhập thành công
-     */
     @GetMapping("/default-success")
     public String defaultSuccess(HttpServletRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
         if (auth != null && auth.isAuthenticated()) {
-            // Kiểm tra quyền (Role trong Spring Security là ROLE_ADMIN, ROLE_STAFF, ROLE_CUSTOMER)
             if (request.isUserInRole("ROLE_ADMIN")) {
                 return "redirect:/admin/home";
             } else if (request.isUserInRole("ROLE_STAFF")) {
-                return "redirect:/staff/home";
+                return "redirect:/staff/home"; // Chuyển đến trang chủ Staff
             }
         }
-        
-        // Mặc định cho User thường (Customer) hoặc trường hợp khác
-        return "redirect:/user/home"; // Trả về template user/home.html
-    }
-    
-    @GetMapping("/admin/home")
-    public String adminHome() {
-        // TODO: Tạo template admin/home.html
-        return "admin/home"; 
+        return "redirect:/user/home";
     }
 
+    // Trang chủ Admin (Dashboard)
+    @GetMapping("/admin/home")
+    public String adminHome(Model model) { 
+        model.addAllAttributes(statsService.getDashboardStats());
+        return "admin/home"; // Trả về dashboard của Admin
+    }
+
+    // Trang chủ Staff (Dashboard)
     @GetMapping("/staff/home")
-    public String staffHome() {
-        // TODO: Tạo template staff/home.html
-        return "staff/home"; 
+    public String staffHome(Model model) { // Thêm Model
+        // Lấy dữ liệu cho Staff
+        var dashboardData = statsService.getDashboardStats();
+        // Giả định 'newOrders' là số đơn hàng cần xử lý
+        long ordersToProcess = (long) dashboardData.getOrDefault("newOrders", 0L);
+        // Tạm thời hardcode, bạn cần thay thế bằng logic nghiệp vụ lấy hàng sắp hết
+        int lowStockProducts = 5; 
+
+        model.addAttribute("ordersToProcess", ordersToProcess);
+        model.addAttribute("lowStockProducts", lowStockProducts);
+        
+        // Trả về template dashboard MỚI của Staff
+        return "admin/staff-dashboard"; 
     }
 
     @GetMapping("/user/home")
     public String userHome() {
-        return "user/home"; // Trả về template user/home.html
+        // Trang chủ cho khách hàng
+        return "user/home";
     }
 }

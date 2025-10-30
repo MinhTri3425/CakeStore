@@ -1,3 +1,4 @@
+// src/main/java/com/cakestore/cakestore/entity/Branch.java
 package com.cakestore.cakestore.entity;
 
 import jakarta.persistence.*;
@@ -21,26 +22,36 @@ public class Branch {
     @Column(name = "Code", nullable = false, length = 50, unique = true)
     private String code;
 
-    @Column(name = "Name", nullable = false, length = 150)
+    @Column(name = "Name", nullable = false, columnDefinition = "NVARCHAR(150)")
     private String name;
 
     @Column(name = "Phone", length = 20)
     private String phone;
 
-    @Column(name = "Line1", length = 255)
+    @Column(name = "Line1", columnDefinition = "NVARCHAR(150)")
     private String line1;
 
-    @Column(name = "Ward", length = 120)
+    @Column(name = "Ward", columnDefinition = "NVARCHAR(150)")
     private String ward;
 
-    @Column(name = "District", length = 120)
+    @Column(name = "District", columnDefinition = "NVARCHAR(150)")
     private String district;
 
-    @Column(name = "City", length = 120)
+    @Column(name = "City", columnDefinition = "NVARCHAR(150)")
     private String city;
 
     @Column(name = "IsActive", nullable = false)
     private boolean isActive = true;
+
+    // ===== THÊM MỚI: Liên kết Manager =====
+    /**
+     * Người quản lý chi nhánh này (1 chi nhánh chỉ có 1 quản lý)
+     * unique=true để đảm bảo 1 user chỉ quản lý 1 chi nhánh
+     */
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ManagerId", unique = true)
+    private User manager;
+    // ======================================
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -162,6 +173,16 @@ public class Branch {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+    
+    // ===== THÊM MỚI: Get/Set cho Manager =====
+    public User getManager() {
+        return manager;
+    }
+
+    public void setManager(User manager) {
+        this.manager = manager;
+    }
+    // ======================================
 
     public Set<BranchProduct> getBranchProducts() {
         return branchProducts;

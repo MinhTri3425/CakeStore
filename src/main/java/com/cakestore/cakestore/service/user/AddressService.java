@@ -2,7 +2,8 @@ package com.cakestore.cakestore.service.user;
 
 import com.cakestore.cakestore.entity.Address;
 import com.cakestore.cakestore.entity.User;
-import com.cakestore.cakestore.repository.UserRepository;
+import com.cakestore.cakestore.repository.user.UserRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

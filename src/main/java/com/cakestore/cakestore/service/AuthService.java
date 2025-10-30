@@ -1,7 +1,7 @@
 package com.cakestore.cakestore.service;
 
 import com.cakestore.cakestore.entity.User;
-import com.cakestore.cakestore.repository.UserRepository;
+import com.cakestore.cakestore.repository.user.UserRepository;
 import com.cakestore.cakestore.security.CustomUserDetails;
 
 import org.springframework.security.core.GrantedAuthority;

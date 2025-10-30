@@ -1,7 +1,6 @@
 package com.cakestore.cakestore.controller.user;
 
 import com.cakestore.cakestore.entity.*;
-import com.cakestore.cakestore.repository.UserRepository;
 import com.cakestore.cakestore.repository.user.AddressRepository;
 import com.cakestore.cakestore.repository.user.BranchInventoryRepository;
 import com.cakestore.cakestore.repository.user.BranchRepository;
@@ -9,6 +8,7 @@ import com.cakestore.cakestore.repository.user.CouponRepository;
 import com.cakestore.cakestore.repository.user.OrderRepository;
 import com.cakestore.cakestore.repository.user.ProductRepository;
 import com.cakestore.cakestore.repository.user.ProductVariantRepository;
+import com.cakestore.cakestore.repository.user.UserRepository;
 import com.cakestore.cakestore.service.user.CartSessionService;
 import com.cakestore.cakestore.service.user.SessionCart;
 import com.cakestore.cakestore.service.user.SessionCart.Line;

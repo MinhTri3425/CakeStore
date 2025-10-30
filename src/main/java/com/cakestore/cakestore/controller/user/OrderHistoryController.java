@@ -2,8 +2,8 @@ package com.cakestore.cakestore.controller.user;
 
 import com.cakestore.cakestore.entity.Order;
 import com.cakestore.cakestore.entity.User;
-import com.cakestore.cakestore.repository.UserRepository;
 import com.cakestore.cakestore.repository.user.OrderRepository;
+import com.cakestore.cakestore.repository.user.UserRepository;
 import com.cakestore.cakestore.service.user.InventoryService;
 import com.cakestore.cakestore.service.user.VnpayService;
 import lombok.RequiredArgsConstructor;

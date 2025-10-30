@@ -1,7 +1,7 @@
 package com.cakestore.cakestore.security;
 
 import com.cakestore.cakestore.entity.User;
-import com.cakestore.cakestore.repository.UserRepository;
+import com.cakestore.cakestore.repository.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.*;

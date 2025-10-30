@@ -4,10 +4,11 @@ package com.cakestore.cakestore.service.user;
 import com.cakestore.cakestore.entity.Favorite;
 import com.cakestore.cakestore.entity.Product;
 import com.cakestore.cakestore.entity.User;
-import com.cakestore.cakestore.repository.UserRepository;
 import com.cakestore.cakestore.repository.user.FavoriteRepository;
 import com.cakestore.cakestore.repository.user.FavoriteRepository.FavoriteItemRow;
 import com.cakestore.cakestore.repository.user.ProductRepository;
+import com.cakestore.cakestore.repository.user.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;

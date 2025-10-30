@@ -4,9 +4,10 @@ import com.cakestore.cakestore.dto.user.ProductCardDto;
 import com.cakestore.cakestore.entity.Product;
 import com.cakestore.cakestore.entity.RecentlyViewed;
 import com.cakestore.cakestore.entity.User;
-import com.cakestore.cakestore.repository.UserRepository;
 import com.cakestore.cakestore.repository.user.ProductRepository;
 import com.cakestore.cakestore.repository.user.RecentlyViewedRepository;
+import com.cakestore.cakestore.repository.user.UserRepository;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

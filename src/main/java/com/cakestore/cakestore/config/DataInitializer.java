@@ -1,7 +1,8 @@
 package com.cakestore.cakestore.config;
 
 import com.cakestore.cakestore.entity.User;
-import com.cakestore.cakestore.repository.UserRepository;
+import com.cakestore.cakestore.repository.user.UserRepository;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

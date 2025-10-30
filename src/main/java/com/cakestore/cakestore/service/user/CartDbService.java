@@ -1,7 +1,6 @@
 package com.cakestore.cakestore.service.user;
 
 import com.cakestore.cakestore.entity.*;
-import com.cakestore.cakestore.repository.UserRepository;
 import com.cakestore.cakestore.repository.user.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

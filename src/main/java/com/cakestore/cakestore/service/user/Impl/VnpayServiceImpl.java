@@ -1,20 +1,17 @@
 package com.cakestore.cakestore.service.user.Impl;
 
+import com.cakestore.cakestore.config.VnpayConfig;
+import com.cakestore.cakestore.service.user.VnpayService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
-import org.springframework.stereotype.Service;
-
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import com.cakestore.cakestore.config.VnpayConfig;
-import com.cakestore.cakestore.service.user.VnpayService;
 
 @Service
 @RequiredArgsConstructor
@@ -23,75 +20,42 @@ public class VnpayServiceImpl implements VnpayService {
 
     private final VnpayConfig vnPayConfig;
 
+    // ========= Public APIs =========
+
     @Override
     public String createPaymentUrl(BigDecimal amount, String orderInfo, String orderId, HttpServletRequest request) {
         try {
-            BigDecimal minimalAmount = BigDecimal.valueOf(1000);
-            BigDecimal amountSafe = (amount == null || amount.compareTo(minimalAmount) < 0)
-                    ? minimalAmount
-                    : amount.setScale(0, RoundingMode.DOWN);
+            long amountX100 = amount.movePointRight(2).longValueExact(); // fail nếu không “đẹp”
+            Map<String, String> p = new HashMap<>();
+            p.put("vnp_Version", vnPayConfig.getVersion());
+            p.put("vnp_Command", vnPayConfig.getCommand());
+            p.put("vnp_TmnCode", vnPayConfig.getTmnCode());
+            p.put("vnp_Amount", String.valueOf(amountX100));
+            p.put("vnp_CurrCode", vnPayConfig.getCurrCode());
+            p.put("vnp_TxnRef", orderId);
+            p.put("vnp_OrderInfo", orderInfo);
+            p.put("vnp_OrderType", vnPayConfig.getOrderType());
+            p.put("vnp_Locale", resolveLocale(request));
+            p.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
+            p.put("vnp_IpAddr", clientIp(request));
 
-            long amountIn = amountSafe.multiply(BigDecimal.valueOf(100)).longValue();
-            log.info("[VNPAY DEBUG] amountIn (VND*100) = {}", amountIn);
-
-            Map<String, String> vnp_Params = new HashMap<>();
-            vnp_Params.put("vnp_Version", vnPayConfig.getVersion());
-            vnp_Params.put("vnp_Command", vnPayConfig.getCommand());
-            vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
-            vnp_Params.put("vnp_Amount", String.valueOf(amountIn));
-            vnp_Params.put("vnp_CurrCode", vnPayConfig.getCurrCode());
-            vnp_Params.put("vnp_TxnRef", orderId);
-            vnp_Params.put("vnp_OrderInfo", orderInfo);
-            vnp_Params.put("vnp_OrderType", vnPayConfig.getOrderType());
-
-            String finalLocale = Optional.ofNullable(request.getParameter("language"))
-                    .filter(s -> !s.isBlank())
-                    .orElse(vnPayConfig.getLocale());
-            vnp_Params.put("vnp_Locale", finalLocale);
-            vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
-            vnp_Params.put("vnp_IpAddr", getClientIp(request));
-
-            // Timestamps (GMT+7)
-            Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+            // timestamps Asia/Ho_Chi_Minh
+            TimeZone tz = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
             SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMddHHmmss");
-            vnp_Params.put("vnp_CreateDate", fmt.format(cld.getTime()));
-            cld.add(Calendar.MINUTE, 15);
-            vnp_Params.put("vnp_ExpireDate", fmt.format(cld.getTime()));
+            fmt.setTimeZone(tz);
+            Calendar cal = Calendar.getInstance(tz);
+            p.put("vnp_CreateDate", fmt.format(cal.getTime()));
+            cal.add(Calendar.MINUTE, 15);
+            p.put("vnp_ExpireDate", fmt.format(cal.getTime()));
 
-            List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
-            Collections.sort(fieldNames);
+            // ký: encode ASCII cả key & value, sort key ASCII, nối &
+            String hashData = buildHashData(p);
+            String secureHash = vnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData);
 
-            StringBuilder hashData = new StringBuilder();
-            StringBuilder query = new StringBuilder();
-
-            for (int i = 0; i < fieldNames.size(); i++) {
-                String key = fieldNames.get(i);
-                String value = vnp_Params.get(key);
-                if (value == null || value.isEmpty())
-                    continue;
-
-                // hashData dùng giá trị raw, encode US-ASCII để VNPay nhận đúng
-                String encodedForHash = URLEncoder.encode(value, StandardCharsets.US_ASCII);
-                hashData.append(key).append("=").append(encodedForHash);
-
-                // query string encode UTF-8 cho URL
-                String encodedForQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
-                query.append(URLEncoder.encode(key, StandardCharsets.UTF_8))
-                        .append("=").append(encodedForQuery);
-
-                if (i < fieldNames.size() - 1) {
-                    hashData.append("&");
-                    query.append("&");
-                }
-            }
-
-            String secureHash = vnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
-            query.append("&vnp_SecureHash=").append(secureHash);
-
-            String finalUrl = vnPayConfig.getPayUrl() + "?" + query.toString();
-            return finalUrl;
-
+            String query = buildQueryForRedirect(p) + "&vnp_SecureHash=" + secureHash;
+            return vnPayConfig.getPayUrl() + "?" + query;
         } catch (Exception e) {
+            log.error("[VNPAY] createPaymentUrl error", e);
             return null;
         }
     }
@@ -101,7 +65,6 @@ public class VnpayServiceImpl implements VnpayService {
         try {
             if (params == null || params.isEmpty())
                 return false;
-
             String vnp_SecureHash = params.get("vnp_SecureHash");
             if (vnp_SecureHash == null || vnp_SecureHash.isBlank())
                 return false;
@@ -110,63 +73,94 @@ public class VnpayServiceImpl implements VnpayService {
             data.remove("vnp_SecureHash");
             data.remove("vnp_SecureHashType");
 
-            List<String> fieldNames = new ArrayList<>(data.keySet());
-            Collections.sort(fieldNames);
-
-            StringBuilder hashData = new StringBuilder();
-            for (int i = 0; i < fieldNames.size(); i++) {
-                String key = fieldNames.get(i);
-                String value = data.get(key);
-                if (value == null || value.isEmpty())
-                    continue;
-                hashData.append(key).append('=').append(encodeVnp(value));
-                if (i < fieldNames.size() - 1)
-                    hashData.append('&');
-            }
-
-            String mySign = vnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
-            log.info("[VNPAY DEBUG] mySign = {}", mySign);
-
+            String hashData = buildHashData(data);
+            String mySign = vnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData);
             return mySign.equalsIgnoreCase(vnp_SecureHash);
-
         } catch (Exception e) {
-            log.error("[VNPAY] Validate error", e);
+            log.error("[VNPAY] validateReturnData error", e);
             return false;
         }
     }
 
     @Override
     public String getPaymentStatus(Map<String, String> params) {
-        if (params == null)
-            return "FAILED";
-
-        String respCode = params.get("vnp_ResponseCode");
-        String txnStatus = params.get("vnp_TransactionStatus");
-
-        if ("00".equals(respCode)) {
-            if (txnStatus == null || "00".equals(txnStatus))
-                return "SUCCESS";
-        }
-        return "FAILED";
+        String resp = params.get("vnp_ResponseCode");
+        String trans = params.get("vnp_TransactionStatus");
+        return ("00".equals(resp) && "00".equals(trans)) ? "SUCCESS" : "PENDING_OR_FAIL";
     }
 
-    // Helpers
-    private String getClientIp(HttpServletRequest request) {
-        try {
-            String ip = request.getHeader("X-Forwarded-For");
-            if (ip != null && !ip.isBlank()) {
-                int comma = ip.indexOf(',');
-                return (comma > 0) ? ip.substring(0, comma).trim() : ip.trim();
+    @Override
+    public boolean verifyIpnSignature(Map<String, String> params) {
+        if (params == null || params.isEmpty())
+            return false;
+        String vnp_SecureHash = params.get("vnp_SecureHash");
+        if (vnp_SecureHash == null || vnp_SecureHash.isBlank())
+            return false;
+
+        Map<String, String> data = new HashMap<>(params);
+        data.remove("vnp_SecureHash");
+        data.remove("vnp_SecureHashType");
+
+        String hashData = buildHashData(data);
+        String mySign = vnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData);
+        return mySign.equalsIgnoreCase(vnp_SecureHash);
+    }
+
+    @Override
+    public String ipnResponse(String code, String message) {
+        return "{\"RspCode\":\"" + code + "\",\"Message\":\"" + message + "\"}";
+    }
+
+    // ========= Helpers =========
+
+    private String resolveLocale(HttpServletRequest request) {
+        String lang = request.getParameter("language");
+        return (lang != null && !lang.isBlank()) ? lang : vnPayConfig.getLocale();
+    }
+
+    private static String encAscii(String s) {
+        return URLEncoder.encode(s, StandardCharsets.US_ASCII);
+    }
+
+    private static String buildHashData(Map<String, String> data) {
+        List<String> keys = new ArrayList<>(data.keySet());
+        Collections.sort(keys);
+        StringJoiner sj = new StringJoiner("&");
+        for (String k : keys) {
+            String v = data.get(k);
+            if (v == null || v.isEmpty())
+                continue;
+            sj.add(encAscii(k) + "=" + encAscii(v));
+        }
+        return sj.toString();
+    }
+
+    private static String buildQueryForRedirect(Map<String, String> data) {
+        List<String> keys = new ArrayList<>(data.keySet());
+        Collections.sort(keys);
+        StringJoiner sj = new StringJoiner("&");
+        for (String k : keys) {
+            String v = data.get(k);
+            if (v == null)
+                continue;
+            sj.add(URLEncoder.encode(k, StandardCharsets.UTF_8)
+                    + "=" + URLEncoder.encode(v, StandardCharsets.UTF_8));
+        }
+        return sj.toString();
+    }
+
+    private String clientIp(HttpServletRequest req) {
+        String[] headers = {
+                "X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP",
+                "HTTP_X_FORWARDED_FOR", "HTTP_X_FORWARDED", "HTTP_X_CLUSTER_CLIENT_IP",
+                "HTTP_CLIENT_IP", "HTTP_FORWARDED_FOR", "HTTP_FORWARDED", "HTTP_VIA", "REMOTE_ADDR"
+        };
+        for (String h : headers) {
+            String ip = req.getHeader(h);
+            if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+                return ip.split(",")[0].trim();
             }
-            ip = request.getHeader("X-Real-IP");
-            return (ip != null && !ip.isBlank()) ? ip : request.getRemoteAddr();
-        } catch (Exception e) {
-            return "0.0.0.0";
         }
-    }
-
-    private String encodeVnp(String s) {
-        String encoded = URLEncoder.encode(s, StandardCharsets.UTF_8);
-        return encoded.replace("+", "%20");
+        return req.getRemoteAddr();
     }
 }

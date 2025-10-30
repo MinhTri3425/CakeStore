@@ -119,6 +119,17 @@
     }
     .btn:active{ transform:translateY(1px) }
 
+    .btn-outline {
+      display:inline-block; width:100%; height:var(--input-h); line-height:var(--input-h);
+      text-align:center; border:1px solid var(--border); border-radius:12px;
+      color:var(--fg); text-decoration:none; background:rgba(15,23,42,.65);
+    }
+
+    .divider {
+      display:flex; align-items:center; gap:10px; margin:14px 0; color:var(--muted);
+    }
+    .divider > div { flex:1; height:1px; background:var(--border); }
+
     .footer{ text-align:center; margin-top:18px; color:var(--muted); font-size:.85rem }
 
     @media(max-width:860px){
@@ -191,6 +202,12 @@
 
           <button class="btn" type="submit">Đăng nhập</button>
         </form>
+
+        <!-- NEW: Register CTA -->
+        <div class="divider" aria-hidden="true">
+          <div></div><span>hoặc</span><div></div>
+        </div>
+        <a class="btn-outline" th:href="@{/register}">Tạo tài khoản mới</a>
 
         <div class="footer">© <span th:text="${#dates.format(#dates.createNow(),'yyyy')}">2025</span> • Admin Console</div>
       </section>

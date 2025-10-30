@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Thống kê & Báo cáo</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div th:replace="~{admin/home :: sidebar}"></div>
+
+            <div class="col-md-9">
+                <h2 class="mb-4">Thống kê & Báo cáo</h2>
+
+                <div class="card mb-4">
+                    <div class="card-header">Doanh thu 7 ngày qua</div>
+                    <div class="card-body">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">Top 5 Sản phẩm bán chạy</div>
+                            <div class="card-body">
+                                <canvas id="topProductsChart"></canvas> </div>
+                        </div>
+                    </div>
+                     <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">Tỉ lệ Đơn hàng theo Trạng thái (%)</div>
+                            <div class="card-body">
+                                <canvas id="orderStatusChart"></canvas> </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // --- Dữ liệu Doanh thu (giữ nguyên) ---
+        const revenueLabels = /*[[${revenueLabels}]]*/ [];
+        const revenueData = /*[[${revenueData}]]*/ [];
+
+        // --- Lấy dữ liệu Top Sản phẩm ---
+        const topProductLabels = /*[[${topProductLabels}]]*/ [];
+        const topProductData = /*[[${topProductData}]]*/ []; // Dữ liệu là Long (số lượng)
+
+        // --- Lấy dữ liệu Trạng thái Đơn hàng ---
+        const orderStatusLabels = /*[[${orderStatusLabels}]]*/ [];
+        const orderStatusData = /*[[${orderStatusData}]]*/ []; // Dữ liệu là Double (% )
+
+        // --- Vẽ biểu đồ Doanh thu (giữ nguyên) ---
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: { /* ... giữ nguyên cấu hình ... */
+                labels: revenueLabels,
+                 datasets: [{
+                    label: 'Doanh thu (Triệu VND)',
+                    data: revenueData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: { /* ... giữ nguyên cấu hình ... */
+                 responsive: true,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Triệu VND' } }
+                }
+            }
+        });
+
+        // --- Vẽ biểu đồ Top 5 Sản phẩm bán chạy ---
+        const topProductsCtx = document.getElementById('topProductsChart');
+        if (topProductLabels.length > 0) { // Chỉ vẽ nếu có dữ liệu
+            new Chart(topProductsCtx, {
+                type: 'bar', // Biểu đồ cột ngang (bar) hoặc cột đứng (column) tùy ý
+                data: {
+                    labels: topProductLabels,
+                    datasets: [{
+                        label: 'Số lượng bán',
+                        data: topProductData,
+                        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff'], // Màu sắc khác nhau
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y', // Đặt trục chính là Y để thành cột ngang
+                    scales: {
+                        x: { beginAtZero: true, title: { display: true, text: 'Số lượng bán' } } // Trục X là số lượng
+                    },
+                    plugins: {
+                         legend: { display: false } // Ẩn chú thích nếu không cần
+                    }
+                }
+            });
+        } else {
+             topProductsCtx.parentNode.innerHTML = '<p class="text-center text-muted">Không có dữ liệu sản phẩm bán chạy.</p>';
+        }
+
+
+        // --- Vẽ biểu đồ Tỉ lệ Đơn hàng theo Trạng thái ---
+        const orderStatusCtx = document.getElementById('orderStatusChart');
+         if (orderStatusLabels.length > 0) { // Chỉ vẽ nếu có dữ liệu
+             new Chart(orderStatusCtx, {
+                 type: 'doughnut', // Biểu đồ tròn
+                 data: {
+                     labels: orderStatusLabels, // Lấy tên trạng thái
+                     datasets: [{
+                         label: 'Tỉ lệ đơn hàng (%)', // Chú thích khi hover
+                         data: orderStatusData, // Lấy dữ liệu %
+                         backgroundColor: [ // Có thể thêm nhiều màu hơn nếu có nhiều trạng thái
+                              '#007bff', // NEW - Blue
+                              '#ffc107', // CONFIRMED - Yellow
+                              '#17a2b8', // SHIPPING - Cyan
+                              '#28a745', // DELIVERED - Green
+                              '#dc3545', // CANCELED - Red
+                              '#6c757d'  // RETURNED - Gray
+                         ],
+                         hoverOffset: 4
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     plugins: {
+                         legend: {
+                             position: 'top', // Vị trí chú thích
+                         },
+                         tooltip: {
+                              callbacks: {
+                                 label: function(context) {
+                                     let label = context.label || '';
+                                     if (label) {
+                                         label += ': ';
+                                     }
+                                     if (context.parsed !== null) {
+                                         // Hiển thị giá trị %
+                                         label += context.parsed.toFixed(1) + '%';
+                                     }
+                                     return label;
+                                 }
+                             }
+                         }
+                     }
+                 }
+             });
+         } else {
+              orderStatusCtx.parentNode.innerHTML = '<p class="text-center text-muted">Không có dữ liệu trạng thái đơn hàng.</p>';
+         }
+
+        /*]]>*/
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${isEdit ? 'Chỉnh sửa Tồn kho' : 'Nhập kho Mới'}"></title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h2 th:text="${isEdit ? 'Chỉnh sửa Tồn kho: ' + inventory.product.name : 'Nhập kho Mới'}" class="mb-4"></h2>
+
+                <form th:action="@{/admin/inventory/update}" method="post">
+                    
+                    <div class="mb-3">
+                        <label for="branchId" class="form-label">Chi nhánh</label>
+                        <select name="branchId" id="branchId" class="form-select" th:disabled="${isEdit}" required>
+                            <option value="" th:if="${!isEdit}">-- Chọn chi nhánh --</option>
+                            <option th:if="${isEdit}" th:value="${inventory.branch.id}" th:text="${inventory.branch.code} + ' - ' + ${inventory.branch.name}" selected></option>
+                            <option th:unless="${isEdit}" th:each="branch : ${branches}" 
+                                th:value="${branch.id}" 
+                                th:text="${branch.code} + ' - ' + ${branch.name}"></option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="productId" class="form-label">Sản phẩm</label>
+                        <select name="productId" id="productId" class="form-select" th:disabled="${isEdit}" required>
+                            <option value="" th:if="${!isEdit}">-- Chọn sản phẩm --</option>
+                            <option th:if="${isEdit}" th:value="${inventory.product.id}" 
+                                th:text="${inventory.product.name} + ' (' + ${inventory.product.sku} + ')'" selected></option>
+                            <option th:unless="${isEdit}" th:each="product : ${products}" 
+                                th:value="${product.id}" 
+                                th:text="${product.name} + ' (' + ${product.sku} + ')'"></option>
+                        </select>
+                        
+                        <p th:if="${isEdit}" class="mt-2 text-danger">
+                            **Đã giữ chỗ (Reserved): <span th:text="${inventory.reserved}">0</span>
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Tồn kho hiện tại (Quantity)</label>
+                        <input type="number" name="quantity" id="quantity" class="form-control" min="0" required
+                            th:value="${isEdit ? inventory.quantity : 0}" />
+                        <div class="form-text text-muted">
+                            Lưu ý: Giá trị này không thể nhỏ hơn số lượng đã giữ chỗ (Reserved).
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" th:text="${actionText}"></button>
+                    <a th:href="@{/admin/inventory}" class="btn btn-secondary">Hủy</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

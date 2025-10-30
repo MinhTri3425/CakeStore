@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            
+            <div class="col-md-3" th:fragment="sidebar">
+                <div class="list-group">
+                    <a th:href="@{/admin/home}" class="list-group-item list-group-item-action">Dashboard</a> 
+                    <a th:href="@{/admin/products}" class="list-group-item list-group-item-action">Quản lý Sản phẩm</a>
+                    <a th:href="@{/admin/orders}" class="list-group-item list-group-item-action">Quản lý Đơn hàng</a>
+                    <a th:href="@{/admin/users}" class="list-group-item list-group-item-action">Quản lý User/Staff</a>
+                    <a th:href="@{/admin/categories}" class="list-group-item list-group-item-action">Quản lý Danh mục</a>
+                    <a th:href="@{/admin/coupons}" class="list-group-item list-group-item-action">Mã Giảm giá</a>
+                    <a th:href="@{/admin/inventory}" class="list-group-item list-group-item-action">Quản lý Nhập hàng</a>
+                    <a th:href="@{/admin/branches}" class="list-group-item list-group-item-action">Quản lý Chi nhánh</a>
+                    <a th:href="@{/admin/stats}" class="list-group-item list-group-item-action">Thống kê</a>
+                    <a th:href="@{/staff/chat}" class="list-group-item list-group-item-action">Chat với Khách hàng</a>
+                </div>
+
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        var currentPath = window.location.pathname;
+                        var sidebarLinks = document.querySelectorAll('.list-group a.list-group-item-action');
+                        
+                        sidebarLinks.forEach(function(link) {
+                            link.classList.remove('active'); // Xóa active khỏi tất cả trước
+                            var linkPath = new URL(link.href).pathname;
+                            
+                            // So sánh: Chính xác hoặc bắt đầu bằng (trừ trang chủ)
+                            if (currentPath === linkPath || (linkPath !== '/admin/home' && currentPath.startsWith(linkPath))) {
+                                link.classList.add('active');
+                            }
+                        });
+
+                        // Xử lý riêng cho Dashboard nếu đang ở trang chủ hoặc trang redirect sau login
+                        if (currentPath === '/admin/home' || currentPath === '/default-success') {
+                             var dashboardLink = document.querySelector('.list-group a[href*="/admin/home"]');
+                             if(dashboardLink) {
+                                // Đảm bảo chỉ dashboard active nếu đúng trang home/default
+                                sidebarLinks.forEach(function(link) { 
+                                    if(link !== dashboardLink) link.classList.remove('active'); 
+                                });
+                                dashboardLink.classList.add('active');
+                             }
+                         }
+                    });
+                </script>
+            </div>
+
+            <div class="col-md-9">
+                 <h2 class="mb-4">Admin Dashboard</h2>
+                 <p>Chào mừng Admin. Tại đây bạn có thể theo dõi tổng quan hệ thống.</p>
+                 <div class="row">
+                     <div class="col-md-4">
+                         <div class="card text-white bg-primary mb-3">
+                             <div class="card-body">
+                                 <h5 class="card-title">Doanh thu Hôm nay</h5>
+                                 <p class="card-text" th:text="${#numbers.formatDecimal(todayRevenue, 0, 'POINT', 0, 'POINT')} + ' VND'">50,000,000 VND</p>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="col-md-4">
+                         <div class="card text-white bg-warning mb-3">
+                             <div class="card-body">
+                                 <h5 class="card-title">Đơn hàng Mới</h5>
+                                 <p class="card-text" th:text="${newOrders} + ' đơn'">15 đơn</p>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="col-md-4">
+                         <div class="card text-white bg-success mb-3">
+                             <div class="card-body">
+                                 <h5 class="card-title">Tổng số Sản phẩm</h5>
+                                 <p class="card-text" th:text="${totalProducts} + ' sản phẩm'">250 sản phẩm</p>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+                 <div class="card mt-4">
+                     <div class="card-header">Thống kê Đơn hàng 7 ngày qua</div>
+                     <div class="card-body">
+                         <p><a th:href="@{/admin/stats}">Xem chi tiết Thống kê và Báo cáo.</a></p>
+                     </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+
+</body>
+</html>

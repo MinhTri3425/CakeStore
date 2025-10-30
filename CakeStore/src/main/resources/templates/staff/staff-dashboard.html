@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Dashboard</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            
+            <div th:replace="~{admin/home :: sidebar}"></div>
+
+            <div class="col-md-9">
+                <h2 class="mb-4">Staff Dashboard</h2>
+                <p>Chào mừng Staff. Bạn có thể thực hiện các thao tác quản lý Sản phẩm và Đơn hàng.</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card text-white bg-info mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Đơn hàng Cần Xử lý</h5>
+                                <p class="card-text" th:text="${ordersToProcess} + ' đơn'">0 đơn</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card text-white bg-danger mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Hàng Tồn kho Sắp hết</h5>
+                                <p class="card-text" th:text="${lowStockProducts} + ' loại sản phẩm'">5 loại sản phẩm</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

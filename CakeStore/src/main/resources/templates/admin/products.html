@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý Sản phẩm</title>
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+<link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+	<div th:replace="~{fragments/header :: header}"></div>
+
+	<div class="container-fluid mt-4">
+		<div class="row">
+			<div th:replace="~{admin/home :: sidebar}"></div>
+			<div class="col-md-9">
+				<h2 class="mb-4">Quản lý Sản phẩm</h2>
+
+				<div th:if="${success}" class="alert alert-success" role="alert">
+					<span th:text="${success}"></span>
+				</div>
+				<div th:if="${error}" class="alert alert-danger" role="alert">
+					<span th:text="${error}"></span>
+				</div>
+
+				<form th:action="@{/admin/products}" method="get" class="mb-4">
+					<div class="row g-3 align-items-center">
+						<div class="col-auto">
+							<input type="search" name="keyword" th:value="${keyword}"
+								class="form-control" placeholder="Tìm kiếm theo Tên/SKU">
+						</div>
+
+						<div class="col-auto">
+							<select name="categoryId" class="form-select">
+								<option value="" th:selected="${categoryId == null}">--
+									Lọc theo Danh mục --</option>
+								<option th:each="cat : ${categories}" th:value="${cat.id}"
+									th:text="${cat.name}"
+									th:selected="${categoryId != null and categoryId == cat.id}">Category
+									Name</option>
+							</select>
+						</div>
+
+						<div class="col-auto">
+							<button type="submit" class="btn btn-info">Áp dụng</button>
+						</div>
+						<div class="col-auto">
+							<a th:href="@{/admin/products/new}" class="btn btn-primary">Thêm
+								Sản phẩm Mới</a>
+						</div>
+					</div>
+				</form>
+
+				<table class="table table-bordered table-striped align-middle">
+					<thead class="table-dark">
+						<tr>
+							<th>ID</th>
+							<th style="width: 80px">Ảnh</th>
+							<th>SKU</th>
+							<th>Tên sản phẩm</th>
+							<th>Giá bán</th>
+							<th>Danh mục</th>
+							<th>Trạng thái</th>
+							<th style="width: 250px">Thao tác</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="product : ${products}">
+							<td th:text="${product.id}">1</td>
+							<td>
+								<img th:if="${#sets.size(product.images) > 0}"
+									th:src="${#lists.toList(product.images).get(0).url}"
+									alt="Ảnh sản phẩm"
+									style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />
+								<span th:unless="${#sets.size(product.images) > 0}" class="text-muted small">N/A</span>
+							</td>
+							<td th:text="${product.sku}">CAKE-001</td>
+							<td th:text="${product.name}">Bánh Kem Dâu Tây</td>
+							<td
+								th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' VND'">150.000
+								VND</td>
+							<td th:text="${product.category.name}">Bánh Lạnh</td>
+							<td>
+								<span th:if="${product.status == 1}" class="badge bg-success">Active</span> 
+								<span th:unless="${product.status == 1}" class="badge bg-warning">Hidden</span>
+							</td>
+							<td class="d-flex gap-2">
+								<a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
+									class="btn btn-sm btn-info">Sửa</a>
+								
+								<form th:action="@{/admin/products/{id}/toggle(id=${product.id})}"
+									method="post" style="display: inline;"
+									onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái của sản phẩm này?');">
+									<button type="submit" class="btn btn-sm"
+										th:classappend="${product.status == 1 ? 'btn-secondary' : 'btn-success'}"
+										th:text="${product.status == 1 ? 'Disable' : 'Enable'}">Disable</button>
+								</form>
+								
+								<form
+									th:action="@{/admin/products/{id}/delete(id=${product.id})}"
+									method="post" style="display: inline;"
+									onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+									<button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+								</form>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div th:if="${#lists.isEmpty(products)}" class="alert alert-info">Không
+					tìm thấy sản phẩm nào.</div>
+
+				<nav th:if="${productPage.totalPages > 0}">
+					<ul class="pagination">
+						<li class="page-item"
+							th:classappend="${productPage.first ? 'disabled' : ''}"><a
+							class="page-link"
+							th:href="@{/admin/products(page=${currentPage - 1}, size=${productPage.size}, keyword=${keyword}, categoryId=${categoryId})}">Previous</a>
+						</li>
+						<li class="page-item"
+							th:each="i : ${#numbers.sequence(0, productPage.totalPages - 1)}"
+							th:classappend="${i == currentPage ? 'active' : ''}"><a
+							class="page-link"
+							th:href="@{/admin/products(page=${i}, size=${productPage.size}, keyword=${keyword}, categoryId=${categoryId})}"
+							th:text="${i + 1}">1</a></li>
+						<li class="page-item"
+							th:classappend="${productPage.last ? 'disabled' : ''}"><a
+							class="page-link"
+							th:href="@{/admin/products(page=${currentPage + 1}, size=${productPage.size}, keyword=${keyword}, categoryId=${categoryId})}">Next</a>
+						</li>
+					</ul>
+				</nav>
+
+			</div>
+		</div>
+	</div>
+
+	<div th:replace="~{fragments/footer :: footer}"></div>
+	<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

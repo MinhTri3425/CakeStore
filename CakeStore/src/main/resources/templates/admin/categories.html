@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý Danh mục</title>
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+<link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+	<div th:replace="~{fragments/header :: header}"></div>
+
+	<div class="container-fluid mt-4">
+		<div class="row">
+			<div th:replace="~{admin/home :: sidebar}"></div>
+
+			<div class="col-md-9">
+				<h2 class="mb-4">Quản lý Danh mục</h2>
+
+				<div th:if="${success}" class="alert alert-success"
+					th:text="${success}"></div>
+				<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+				<!-- 🔎 Tìm kiếm + Lọc + Size -->
+				<form class="row g-2 align-items-end mb-3" method="get"
+					th:action="@{/admin/categories}">
+					<div class="col-md-4">
+						<label class="form-label">Tìm kiếm (Tên/Slug)</label> <input
+							type="text" class="form-control" name="q" th:value="${q}">
+					</div>
+
+					<div class="col-md-3">
+						<label class="form-label">Trạng thái</label> <select
+							class="form-select" name="status">
+							<option value="all" th:selected="${status=='all'}">Tất
+								cả</option>
+							<option value="active" th:selected="${status=='active'}">Active</option>
+							<option value="disabled" th:selected="${status=='disabled'}">Disabled</option>
+						</select>
+					</div>
+
+					<div class="col-md-2">
+						<label class="form-label">Mỗi trang</label> <select
+							class="form-select" name="size">
+							<option th:selected="${size==5}">5</option>
+							<option th:selected="${size==10}">10</option>
+							<option th:selected="${size==20}">20</option>
+							<option th:selected="${size==50}">50</option>
+						</select>
+					</div>
+
+					<div class="col-md-3 text-end">
+						<a th:href="@{/admin/categories/new}" class="btn btn-primary">Thêm
+							Danh mục</a>
+						<button type="submit" class="btn btn-outline-secondary">Lọc</button>
+					</div>
+
+					<!-- giữ sort/dir khi bấm Lọc -->
+					<input type="hidden" name="sort" th:value="${sort}"> <input
+						type="hidden" name="dir" th:value="${dir}">
+				</form>
+
+				<!-- 📋 Bảng -->
+				<table class="table table-bordered table-striped align-middle">
+					<thead class="table-dark">
+						<tr>
+							<th style="width: 80px"><a
+								class="link-light text-decoration-none"
+								th:href="@{/admin/categories(q=${q},status=${status},page=${page},size=${size},sort='id',dir=${dir})}">ID</a>
+							</th>
+							<th><a class="link-light text-decoration-none"
+								th:href="@{/admin/categories(q=${q},status=${status},page=${page},size=${size},sort='name',dir=${dir})}">Tên</a>
+							</th>
+							<th>Slug</th>
+							<th>Danh mục Cha</th>
+							<th style="width: 110px"><a
+								class="link-light text-decoration-none"
+								th:href="@{/admin/categories(q=${q},status=${status},page=${page},size=${size},sort='sortOrder',dir=${dir})}">Thứ
+									tự</a></th>
+							<th style="width: 120px">Trạng thái</th>
+							<th style="width: 170px">Thao tác</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="cat : ${categories}">
+							<td th:text="${cat.id}">1</td>
+							<td th:text="${cat.name}">Bánh Kem</td>
+							<td th:text="${cat.slug}">banh-kem</td>
+							<td th:text="${cat.parent != null ? cat.parent.name : 'ROOT'}">ROOT</td>
+							<td th:text="${cat.sortOrder}">0</td>
+							<td><span th:if="${cat.active}" class="badge bg-success">Active</span>
+								<span th:unless="${cat.active}" class="badge bg-danger">Disabled</span>
+							</td>
+							<td><a
+								th:href="@{/admin/categories/{id}/edit(id=${cat.id})}"
+								class="btn btn-sm btn-info">Sửa</a>
+								<form th:action="@{/admin/categories/{id}/delete(id=${cat.id})}"
+									method="post" style="display: inline"
+									onsubmit="return confirm('Bạn có chắc chắn muốn xoá?')">
+									<input type="hidden" th:if="${_csrf != null}"
+										th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+									<button type="submit" class="btn btn-sm btn-danger">Xoá</button>
+								</form></td>
+						</tr>
+					</tbody>
+				</table>
+
+				<!-- ⏭️ Phân trang -->
+				<div class="d-flex justify-content-between align-items-center">
+					<div class="small">
+						Trang <span th:text="${pageData.number + 1}"></span> / <span
+							th:text="${pageData.totalPages == 0 ? 1 : pageData.totalPages}"></span>,
+						Tổng <span th:text="${pageData.totalElements}"></span> danh mục
+					</div>
+
+					<nav>
+						<ul class="pagination mb-0">
+							<li class="page-item"
+								th:classappend="${pageData.first} ? 'disabled'"><a
+								class="page-link"
+								th:href="@{/admin/categories(q=${q},status=${status},size=${size},sort=${sort},dir=${dir},page=1)}">«</a>
+							</li>
+							<li class="page-item"
+								th:classappend="${pageData.first} ? 'disabled'"><a
+								class="page-link"
+								th:href="@{/admin/categories(q=${q},status=${status},size=${size},sort=${sort},dir=${dir},page=${pageData.number})}">‹</a>
+							</li>
+
+							<!-- render 5 trang quanh current -->
+							<li class="page-item"
+								th:each="p : ${#numbers.sequence(T(java.lang.Math).max(1, pageData.number+1-2), T(java.lang.Math).min(pageData.totalPages, pageData.number+1+2))}"
+								th:classappend="${p == pageData.number+1} ? 'active'"><a
+								class="page-link" th:text="${p}"
+								th:href="@{/admin/categories(q=${q},status=${status},size=${size},sort=${sort},dir=${dir},page=${p})}">1</a>
+							</li>
+
+							<li class="page-item"
+								th:classappend="${pageData.last} ? 'disabled'"><a
+								class="page-link"
+								th:href="@{/admin/categories(q=${q},status=${status},size=${size},sort=${sort},dir=${dir},page=${pageData.number+2})}">›</a>
+							</li>
+							<li class="page-item"
+								th:classappend="${pageData.last} ? 'disabled'"><a
+								class="page-link"
+								th:href="@{/admin/categories(q=${q},status=${status},size=${size},sort=${sort},dir=${dir},page=${pageData.totalPages})}">»</a>
+							</li>
+						</ul>
+					</nav>
+				</div>
+
+				<div th:if="${#lists.isEmpty(categories)}"
+					class="alert alert-info mt-3">Không có danh mục nào.</div>
+			</div>
+		</div>
+	</div>
+
+	<div th:replace="~{fragments/footer :: footer}"></div>
+	<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

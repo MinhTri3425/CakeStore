@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+<meta charset="UTF-8">
+<title th:text="${isEdit ? 'Sửa mã giảm giá' : 'Tạo mã giảm giá'}"></title>
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+<link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+	<div th:replace="~{fragments/header :: header}"></div>
+
+	<div class="container mt-4">
+		<h3
+			th:text="${isEdit ? 'Chỉnh sửa: ' + coupon.code : 'Tạo mã giảm giá mới'}"></h3>
+
+		<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+		<form th:action="@{/admin/coupons}" th:object="${coupon}"
+			method="post">
+			<input type="hidden" th:field="*{id}" th:if="${isEdit}" />
+
+			<div class="row">
+				<div class="col-md-4 mb-3">
+					<label class="form-label">Code</label> <input class="form-control"
+						th:field="*{code}" required>
+				</div>
+				<div class="col-md-4 mb-3">
+					<label class="form-label">Loại</label> <select class="form-select"
+						th:field="*{type}" required>
+						<option th:each="t : ${couponTypes}" th:value="${t}"
+							th:text="${t}"></option>
+					</select>
+				</div>
+				<div class="col-md-4 mb-3">
+					<label class="form-label">Giá trị</label> <input type="number"
+						step="0.01" min="0.01" class="form-control" th:field="*{value}"
+						required>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-4 mb-3">
+					<label class="form-label">Min Subtotal</label> <input type="number"
+						step="0.01" min="0" class="form-control" th:field="*{minSubtotal}">
+				</div>
+				<div class="col-md-4 mb-3">
+					<label class="form-label">Max Discount</label> <input type="number"
+						step="0.01" min="0" class="form-control" th:field="*{maxDiscount}">
+				</div>
+				<div class="col-md-4 mb-3">
+					<label class="form-label">Số lượng</label> <input type="number"
+						min="0" class="form-control" th:field="*{quantity}" required>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-6 mb-3">
+					<label class="form-label">Bắt đầu</label> <input
+						type="datetime-local" th:field="*{startsAt}"
+						th:value="${#temporals.format(coupon.startsAt, 'yyyy-MM-dd''T''HH:mm')}"
+						class="form-control" id="startsAt" required>
+				</div>
+				<div class="col-md-6 mb-3">
+					<label class="form-label">Kết thúc</label> <input
+						type="datetime-local" th:field="*{endsAt}"
+						th:value="${#temporals.format(coupon.endsAt, 'yyyy-MM-dd''T''HH:mm')}"
+						class="form-control" id="endsAt" required>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-6 mb-3">
+					<label class="form-label">Chi nhánh áp dụng</label> <select
+						class="form-select" name="branchId">
+						<option th:value="${null}" th:selected="${coupon.branch == null}">Toàn
+							hệ thống</option>
+						<option th:each="b : ${branches}" th:value="${b.id}"
+							th:text="${b.code + ' - ' + b.name}"
+							th:selected="${coupon.branch != null and coupon.branch.id == b.id}"></option>
+					</select>
+				</div>
+				<div class="col-md-6 mb-3 form-check d-flex align-items-center">
+					<input class="form-check-input me-2" type="checkbox"
+						th:field="*{active}" id="isActive"> <label
+						class="form-check-label" for="isActive">Kích hoạt</label>
+				</div>
+			</div>
+
+			<button class="btn btn-primary" type="submit"
+				th:text="${isEdit ? 'Cập nhật' : 'Tạo mới'}"></button>
+			<a th:href="@{/admin/coupons}" class="btn btn-secondary">Huỷ</a>
+		</form>
+	</div>
+
+	<div th:replace="~{fragments/footer :: footer}"></div>
+	<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

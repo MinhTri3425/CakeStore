@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chi tiết Đơn hàng</title>
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" />
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+  <div th:replace="~{fragments/header :: header}"></div>
+
+  <div class="container-fluid mt-4">
+    <div class="row">
+      <div th:replace="~{admin/home :: sidebar}"></div>
+      <div class="col-md-9">
+        <h2 class="mb-4">Chi tiết Đơn hàng</h2>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="card mb-4">
+          <div class="card-header bg-dark text-white">
+            Thông tin đơn hàng
+          </div>
+          <div class="card-body">
+            <p><strong>ID:</strong> <span th:text="${order.id}"></span></p>
+            <p><strong>Khách hàng:</strong> <span th:text="${order.user.fullName}"></span></p>
+            <p><strong>Email:</strong> <span th:text="${order.user.email}"></span></p>
+            <p><strong>Số điện thoại:</strong> <span th:text="${order.address.phone}"></span></p>
+            <p><strong>Địa chỉ giao hàng:</strong>
+              <span th:text="${order.address.line1 + ', ' + order.address.city}"></span>
+            </p>
+            <p><strong>Trạng thái:</strong>
+              <span class="badge"
+                    th:classappend="${order.status.name() == 'DELIVERED' ? 'bg-success' :
+                                    order.status.name() == 'CANCELED' ? 'bg-danger' : 'bg-warning'}"
+                    th:text="${order.status}"></span>
+            </p>
+            <p><strong>Phương thức thanh toán:</strong> <span th:text="${order.paymentMethod}"></span></p>
+            <p><strong>Ngày tạo:</strong> <span th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></span></p>
+            <p><strong>Ghi chú:</strong> <span th:text="${order.note != null ? order.note : '—'}"></span></p>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header bg-dark text-white">
+            Sản phẩm trong đơn hàng
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-bordered mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Tên sản phẩm</th>
+                  <th>Số lượng</th>
+                  <th>Giá</th>
+                  <th>Tổng</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="item, iterStat : ${order.items}">
+                  <td th:text="${iterStat.index + 1}">1</td>
+                  <td th:text="${item.product.name}">Bánh kem socola</td>
+                  <td th:text="${item.quantity}">2</td>
+                  <td th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' VND'">150.000 VND</td>
+                  <td th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'POINT', 0, 'POINT')} + ' VND'">300.000 VND</td>
+                </tr>
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="4" class="text-end"><strong>Tổng cộng:</strong></td>
+                  <td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' VND'">500.000 VND</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="card mt-4 mb-4">
+            <div class="card-header bg-info text-white">
+                Cập nhật Trạng thái Đơn hàng
+            </div>
+            <div class="card-body">
+                <form th:action="@{/admin/orders/{id}/update-status(id=${order.id})}" method="post" class="d-flex align-items-center">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                    <label for="newStatus" class="form-label me-2 mb-0">Chọn trạng thái mới:</label>
+                    <select name="newStatus" id="newStatus" class="form-select w-auto me-2" required>
+                        <option th:each="stat : ${allStatuses}"
+                                th:value="${stat}"
+                                th:text="${stat}"
+                                th:selected="${stat == order.status}">
+                            Trạng thái
+                        </option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                </form>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between">
+          <a th:href="@{/admin/orders}" class="btn btn-secondary">← Quay lại</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div th:replace="~{fragments/footer :: footer}"></div>
+  <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

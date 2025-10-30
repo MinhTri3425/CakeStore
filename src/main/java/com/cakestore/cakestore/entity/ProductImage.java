@@ -19,10 +19,10 @@ public class ProductImage {
     @JoinColumn(name = "ProductId", nullable = false)
     private Product product;
 
-    @Column(name = "Url", nullable = false, length = 500)
+    @Column(name = "Url", nullable = false, length = 500, columnDefinition = "NVARCHAR(500)")
     private String url;
 
-    @Column(name = "Alt", length = 200)
+    @Column(name = "Alt", length = 200, columnDefinition = "NVARCHAR(200)")
     private String alt;
 
     @Column(name = "SortOrder", nullable = false)

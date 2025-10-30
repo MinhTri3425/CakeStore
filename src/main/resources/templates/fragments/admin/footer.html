@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<footer th:fragment="footer" class="app-footer"> <div class="container-fluid text-center py-3">
+		<strong>
+          Copyright &copy; 2024-2025&nbsp;
+          <a href="#" class="text-decoration-none">CakeStore.io</a>.
+        </strong>
+        All rights reserved.
+    </div>
+</footer>
+
+<div th:fragment="footer-scripts">
+	<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
+	
+	<script th:src="@{/adminlte/js/adminlte.min.js}"></script>
+</div>
+
+</body>
+</html>

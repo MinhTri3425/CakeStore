@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark" th:fragment="staff-sidebar">
+    <div class="sidebar-brand">
+        <a th:href="@{/staff/home}" class="brand-link">
+            <img th:src="@{/adminlte/assets/img/AdminLTELogo.png}" alt="Staff Logo" class="brand-image opacity-75 shadow">
+            <span class="brand-text fw-light">CakeStore Staff</span>
+        </a>
+    </div>
+    
+    <div class="sidebar-wrapper">
+        <nav class="mt-2">
+            <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" data-accordion="false">
+                
+                <li class="nav-item">
+                    <a th:href="@{/staff/home}" class="nav-link">
+                        <i class="nav-icon bi bi-speedometer2"></i> <p>Dashboard (Staff)</p>
+                    </a>
+                </li>
+                
+                <li class="nav-header">TÁC NGHIỆP</li>
+                
+                <li class="nav-item">
+                    <a th:href="@{/admin/orders}" class="nav-link">
+                        <i class="nav-icon bi bi-receipt"></i> <p>Quản lý Đơn hàng</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/products}" class="nav-link">
+                        <i class="nav-icon bi bi-box-seam-fill"></i> <p>Quản lý Sản phẩm</p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</aside>
+</html>

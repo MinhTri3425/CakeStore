@@ -24,7 +24,7 @@ public class Comment {
     private User user;
 
     @Lob
-    @Column(name = "Content", nullable = false)
+    @Column(name = "Content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String content;
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)

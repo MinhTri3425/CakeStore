@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
+<head>
+  <meta charset="UTF-8"/>
+  <title>CakeStore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <!-- CSRF for POST (branch select, etc.) -->
+  <meta th:if="${_csrf != null}" name="_csrf_parameter" th:content="${_csrf.parameterName}" />
+  <meta th:if="${_csrf != null}" name="_csrf_token" th:content="${_csrf.token}" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#111827;
+      --border:rgba(148,163,184,.25);
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --primary:#22c55e;
+      --secondary:#60a5fa;
+      --accent:linear-gradient(135deg,#22c55e,#60a5fa);
+    }
+
+    body{
+      margin:0;
+      font-family:'Inter',sans-serif;
+      background:
+        radial-gradient(60rem 40rem at 10% 10%,rgba(34,197,94,.1),transparent 40%),
+        radial-gradient(60rem 40rem at 90% 20%,rgba(96,165,250,.1),transparent 40%),
+        var(--bg);
+      color:var(--text);
+    }
+
+    /* --- Navbar --- */
+    .navbar{
+      background:rgba(17,24,39,.8)!important;
+      backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+      padding-top:.5rem;
+      padding-bottom:.5rem;
+    }
+    .navbar-brand{
+      font-weight:700;
+      font-size:1.25rem;
+      color:#22c55e!important;
+      text-shadow:0 0 6px rgba(34,197,94,.6);
+      line-height:1;
+      padding-left:0;
+      margin-left:0;
+    }
+    .navbar-brand:hover{opacity:.85}
+
+    /* hàng flex chính trong navbar */
+    .nav-inner-row{
+      align-items:center; /* canh giữa theo trục dọc tất cả item trong một line */
+    }
+
+    /* search box */
+    .search-form .form-control{
+      min-width:0;
+      color:#fff!important;
+      caret-color:#fff;
+      background:rgba(0,0,0,.2);
+      border:1px solid var(--border);
+      border-radius:10px;
+    }
+    .search-form .form-control::placeholder{color:#fff; opacity:.9}
+
+    /* ép chiều cao + căn giữa dọc cho input và nút search */
+    .nav-search .form-control{
+      min-height:44px;
+      display:flex;
+      align-items:center;
+    }
+    .nav-search .btn-search{
+      min-height:44px;
+      display:flex;
+      align-items:center;
+      font-size:1rem;
+      line-height:1.2;
+    }
+
+    .search-form .btn-search{
+      white-space:nowrap;
+      font-weight:600;
+      color:#60a5fa;
+      background:rgba(96,165,250,.12);
+      border:1px solid rgba(96,165,250,.6);
+      border-radius:10px;
+      transition:.16s;
+    }
+    .search-form .btn-search:hover{
+      background:#60a5fa;
+      color:#0b1220;
+    }
+
+    /* ====== MENU / ACTION BAR ====== */
+    .header-menu{
+      display:flex;
+      align-items:center;
+      gap:.75rem;
+      flex-wrap:nowrap;
+      white-space:nowrap;
+      color:var(--text);
+      font-size:.9rem;
+      font-weight:500;
+    }
+
+    .header-item{
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:.4rem;
+      padding:.5rem .7rem;
+      border-radius:10px;
+      color:var(--text);
+      text-decoration:none;
+      font-size:.9rem;
+      line-height:1.2;
+      border:1px solid transparent;
+      transition:.16s;
+    }
+    .header-item:hover{
+      background:rgba(255,255,255,.05);
+      border-color:var(--border);
+      color:#60a5fa;
+      text-decoration:none;
+    }
+
+    .header-item .icon{
+      font-size:.9rem;
+      line-height:1;
+      opacity:.9;
+    }
+
+    /* badge ở Yêu thích, Giỏ hàng */
+    .badge-dot{
+      position:absolute;
+      top:0;
+      right:0;
+      transform:translate(40%,-40%);
+      background:#ef4444;
+      color:#fff;
+      border-radius:999px;
+      min-width:18px;
+      height:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:.65rem;
+      font-weight:600;
+      padding:0 4px;
+      line-height:1;
+      box-shadow:0 0 10px rgba(239,68,68,.6);
+    }
+
+    /* Chi nhánh block */
+    .branch-block{
+      display:flex;
+      align-items:center;
+      gap:.4rem;
+      padding:.5rem .7rem;
+      border-radius:10px;
+      border:1px solid transparent;
+      background:transparent;
+      transition:.16s;
+      color:var(--text);
+    }
+    .branch-block:hover{
+      background:rgba(255,255,255,.05);
+      border-color:var(--border);
+      color:#60a5fa;
+    }
+    .branch-label{
+      font-size:.9rem;
+      font-weight:500;
+      color:var(--text);
+      line-height:1.2;
+    }
+    .branch-select{
+      background:transparent;
+      border:none;
+      color:#e5e7eb;
+      font-size:.8rem;
+      font-weight:500;
+      line-height:1.2;
+      padding:0;
+      max-width:220px;
+    }
+    .branch-select:focus{
+      outline:none;
+    }
+    .branch-select option{
+      color:#0b1220;
+    }
+
+    /* card & footer */
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:0 12px 32px rgba(0,0,0,.5);
+      color:var(--text)
+    }
+    .card-img-top{
+      object-fit:cover;
+      height:180px;
+      border-bottom:1px solid var(--border)
+    }
+    .price{
+      font-weight:700;
+      color:#a5f3fc
+    }
+
+    footer{
+      border-top:1px solid var(--border);
+      background:rgba(15,23,42,.6);
+      backdrop-filter:blur(10px);
+      color:var(--muted)
+    }
+
+    /* responsive: dưới lg thì menu wrap dưới search */
+    @media(max-width:992px){
+      .navbar-collapse{
+        padding-top:1rem;
+      }
+      .header-menu{
+        flex-wrap:wrap;
+        row-gap:.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg fixed-top">
+  <!-- container-fluid để logo sát trái hơn, ps-2 pe-3 = padding trái ít -->
+  <div class="container-fluid ps-2 pe-3">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="/" style="padding-left:0;">
+      🍰 <span>CakeStore</span>
+    </a>
+
+    <!-- mobile toggle -->
+    <button class="navbar-toggler bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="nav" class="collapse navbar-collapse">
+      <!-- nav-inner-row giữ mọi thứ cùng baseline -->
+      <div class="d-flex w-100 flex-column flex-lg-row align-items-lg-center gap-3 nav-inner-row">
+
+        <!-- Search -->
+        <form class="search-form d-flex flex-grow-1 align-items-center gap-2 nav-search"
+              action="/search" method="get" style="min-width:260px;">
+          <input class="form-control" name="q" placeholder="Tìm bánh..." />
+          <button class="btn btn-search px-3">Tìm</button>
+        </form>
+
+        <!-- MENU (right side) -->
+        <div class="header-menu ms-lg-auto">
+
+          <!-- Chi nhánh -->
+          <div class="branch-block" style="position:relative;">
+            <span class="icon">🏬</span>
+            <div class="d-flex flex-column">
+              <span class="branch-label">Chi nhánh</span>
+              <select id="branchSelect" class="branch-select">
+                <option>Đang tải chi nhánh...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Yêu thích -->
+          <a class="header-item position-relative" href="/fav" title="Danh sách yêu thích">
+            <span class="icon">♥</span>
+            <span>Yêu thích</span>
+            <span class="badge-dot"
+                  th:if="${session.FAV_IDS != null and #lists.size(session.FAV_IDS) > 0}"
+                  th:text="${#lists.size(session.FAV_IDS)}"></span>
+          </a>
+
+          <!-- Giỏ hàng -->
+          <a class="header-item position-relative" href="/cart">
+            <span class="icon">🛒</span>
+            <span>Giỏ hàng</span>
+          </a>
+
+          <!-- Nếu đã đăng nhập -->
+          <a class="header-item"
+             th:if="${#authorization.expression('isAuthenticated()')}"
+             href="/account"
+             style="color:#22c55e;">
+            <span class="icon">👤</span>
+            <span>Tài khoản</span>
+          </a>
+
+          <!-- Nếu chưa đăng nhập -->
+          <a class="header-item"
+             th:unless="${#authorization.expression('isAuthenticated()')}"
+             href="/auth/login"
+             style="color:#22c55e;">
+            <span class="icon">🔑</span>
+            <span>Đăng nhập</span>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- page container -->
+<div class="container" style="padding-top:100px; padding-bottom:50px;">
+  <div th:replace="${content}"></div>
+</div>
+
+<footer class="py-4 mt-5 text-center small">
+  © 2025 • <span style="color:#22c55e;">CakeStore</span> — Ngọt ngào từ bột và bơ.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  (async function () {
+    try {
+      const res = await fetch('/api/branches'); // guest cũng truy cập được
+      if (!res.ok) throw new Error('no branches');
+      const data = await res.json();
+      const sel = document.getElementById('branchSelect');
+      sel.innerHTML = '';
+
+      // đọc branchId từ cookie BRANCH_ID
+      const cookie = document.cookie
+        .split(';')
+        .map(c => c.trim())
+        .find(c => c.startsWith('BRANCH_ID='));
+      const current = cookie ? cookie.split('=')[1] : null;
+
+      // sort: active first, sau đó theo id
+      data.sort((a,b) => (a.isActive === b.isActive) ? (a.id - b.id) : (a.isActive ? -1 : 1));
+
+      data.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = (b.name ? b.name : b.code) + (b.city ? (' • ' + b.city) : '');
+        if (String(b.id) === String(current)) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      // on change branch -> post form ẩn
+      sel.addEventListener('change', function () {
+        const v = sel.value;
+        const f = document.createElement('form');
+        f.method = 'post';
+        f.action = '/branch/select';
+
+        // branchId
+        const inpt = document.createElement('input');
+        inpt.type = 'hidden';
+        inpt.name = 'branchId';
+        inpt.value = v;
+        f.appendChild(inpt);
+
+        // CSRF nếu có
+        const paramMeta = document.querySelector('meta[name="_csrf_parameter"]');
+        const tokenMeta = document.querySelector('meta[name="_csrf_token"]');
+        if (paramMeta && tokenMeta) {
+          const tokenInput = document.createElement('input');
+          tokenInput.type = 'hidden';
+          tokenInput.name = paramMeta.getAttribute('content');
+          tokenInput.value = tokenMeta.getAttribute('content');
+          f.appendChild(tokenInput);
+        }
+
+        document.body.appendChild(f);
+        f.submit();
+      });
+    } catch (e) {
+      const sel = document.getElementById('branchSelect');
+      if (sel) sel.innerHTML = '<option>Không có chi nhánh</option>';
+    }
+  })();
+</script>
+</body>
+</html>

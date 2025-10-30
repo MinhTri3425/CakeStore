@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6" lang="en">
+
+<div th:fragment="content">
+    
+    <div class="app-content-header">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6"><h3 class="mb-0">Staff Dashboard</h3></div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item active" aria-current="page">Staff Home</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="app-content">
+        <div class="container-fluid">
+            <p>Chào mừng Staff. Bạn có thể thực hiện các thao tác quản lý Sản phẩm và Đơn hàng.</p>
+            
+            <div class="row">
+                <div class="col-lg-6 col-12">
+                    <div class="small-box text-bg-info">
+                        <div class="inner">
+                            <h3 th:text="${ordersToProcess} + ' đơn'">0 đơn</h3>
+                            <p>Đơn hàng Cần Xử lý</p>
+                        </div>
+                        <div class="icon"><i class="bi bi-bag-plus-fill"></i></div>
+                        <a th:href="@{/admin/orders(status='NEW')}" class="small-box-footer link-light">
+                            Xem chi tiết <i class="bi bi-link-45deg"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-12">
+                    <div class="small-box text-bg-danger">
+                        <div class="inner">
+                            <h3 th:text="${lowStockProducts} + ' loại SP'">5 loại sản phẩm</h3>
+                            <p>Hàng Tồn kho Sắp hết</p>
+                        </div>
+                        <div class="icon"><i class="bi bi-archive-fill"></i></div>
+                        <a th:href="@{/admin/inventory}" class="small-box-footer link-light">
+                            Xem chi tiết <i class="bi bi-link-45deg"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

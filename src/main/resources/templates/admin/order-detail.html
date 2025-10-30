@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <div th:replace="~{fragments/admin/header :: header-css}"></div>
+    <title>Chi tiết Đơn hàng</title>
+</head>
+<body class="layout-fixed sidebar-expand-lg">
+<div class="app-wrapper">
+
+    <div th:replace="~{fragments/admin/header :: header}"></div>
+
+    <div th:replace="~{admin/home :: sidebar}"></div>
+
+    <main class="app-main">
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6"><h3 class="mb-0">Chi tiết Đơn hàng</h3></div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-end">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/home}">Home</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/admin/orders}">Đơn hàng</a></li>
+                            <li class="breadcrumb-item active" aria-current="page" th:text="'#' + ${order.id}"></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-content">
+            <div class="container-fluid">
+
+                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+                <!-- Thông tin đơn hàng -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">Thông tin đơn hàng</div>
+                    <div class="card-body">
+                        <p><strong>Mã đơn:</strong> <span th:text="${order.id}"></span></p>
+
+                        <p><strong>Khách hàng:</strong>
+                            <span th:text="${order.shippingFullName != null ? order.shippingFullName : order.user.fullName}"></span>
+                        </p>
+
+                        <p><strong>Email:</strong>
+                            <span th:text="${order.user != null ? order.user.email : '—'}"></span>
+                        </p>
+
+                        <p><strong>Số điện thoại:</strong>
+                            <span th:text="${order.shippingPhone != null ? order.shippingPhone :
+                                           (order.address != null ? order.address.phone : '—')}"></span>
+                        </p>
+
+                        <p><strong>Địa chỉ giao hàng:</strong>
+                            <span th:text="${order.shippingLine1 != null ?
+                                           order.shippingLine1 + ', ' + order.shippingWard + ', ' +
+                                           order.shippingDistrict + ', ' + order.shippingCity
+                                           : (order.address != null ?
+                                              order.address.line1 + ', ' + order.address.city : '—')}"></span>
+                        </p>
+
+                        <p><strong>Chi nhánh xử lý:</strong>
+                            <span th:text="${order.branch != null ? order.branch.name : '—'}"></span>
+                        </p>
+
+                        <p><strong>Trạng thái:</strong>
+                            <span class="badge"
+                                  th:classappend="${order.status.name() == 'DELIVERED' ? 'text-bg-success' :
+                                                  order.status.name() == 'CANCELED' ? 'text-bg-danger' : 'text-bg-warning'}"
+                                  th:text="${order.status}"></span>
+                        </p>
+
+                        <p><strong>Phương thức thanh toán:</strong>
+                            <span th:text="${order.paymentMethod != null ? order.paymentMethod : '—'}"></span>
+                        </p>
+
+                        <p><strong>Ngày tạo:</strong>
+                            <span th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></span>
+                        </p>
+
+                        <p><strong>Ghi chú:</strong>
+                            <span th:text="${order.note != null ? order.note : '—'}"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Danh sách sản phẩm -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">Sản phẩm trong đơn hàng</div>
+                    <div class="card-body p-0">
+                        <table class="table table-bordered mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Số lượng</th>
+                                <th>Giá</th>
+                                <th>Tổng</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="item, iterStat : ${order.items}">
+                                <td th:text="${iterStat.index + 1}"></td>
+                                <td th:text="${item.nameSnapshot != null ? item.nameSnapshot :
+                                             (item.product != null ? item.product.name : '—')}"></td>
+                                <td th:text="${item.quantity}"></td>
+                                <td th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' đ'"></td>
+                                <td th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'POINT', 0, 'POINT')} + ' đ'"></td>
+                            </tr>
+                            </tbody>
+                            <tfoot class="table-light">
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Tổng cộng:</strong></td>
+                                <td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' đ'"></td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Cập nhật trạng thái -->
+                <div class="card mt-4 mb-4">
+                    <div class="card-header bg-info text-white">Cập nhật Trạng thái Đơn hàng</div>
+                    <div class="card-body">
+                        <form th:action="@{/admin/orders/{id}/update-status(id=${order.id})}" method="post"
+                              class="d-flex align-items-center">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <label for="newStatus" class="form-label me-2 mb-0">Chọn trạng thái mới:</label>
+                            <select name="newStatus" id="newStatus" class="form-select w-auto me-2" required>
+                                <option th:each="stat : ${allStatuses}"
+                                        th:value="${stat}"
+                                        th:text="${stat}"
+                                        th:selected="${stat == order.status}"></option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">Cập nhật</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a th:href="@{/admin/orders}" class="btn btn-secondary">← Quay lại</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/admin/footer :: footer}"></div>
+
+</div>
+
+<div th:replace="~{fragments/admin/footer :: footer-scripts}"></div>
+<script th:replace="~{admin/home :: script-active-sidebar}"></script>
+</body>
+</html>

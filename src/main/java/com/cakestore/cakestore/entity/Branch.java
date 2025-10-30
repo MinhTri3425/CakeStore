@@ -18,30 +18,32 @@ public class Branch {
     private Long id;
 
     /** Ví dụ: HCM-Q1, HN-CG */
-    @Column(name = "Code", nullable = false, length = 50, unique = true)
+    @Column(name = "Code", nullable = false, length = 50, unique = true, columnDefinition = "NVARCHAR(50)")
     private String code;
 
-    @Column(name = "Name", nullable = false, length = 150)
+    @Column(name = "Name", nullable = false, length = 150, columnDefinition = "NVARCHAR(150)")
     private String name;
 
-    @Column(name = "Phone", length = 20)
+    @Column(name = "Phone", length = 20, columnDefinition = "NVARCHAR(20)")
     private String phone;
 
-    @Column(name = "Line1", length = 255)
+    @Column(name = "Line1", length = 255, columnDefinition = "NVARCHAR(255)")
     private String line1;
 
-    @Column(name = "Ward", length = 120)
+    @Column(name = "Ward", length = 120, columnDefinition = "NVARCHAR(120)")
     private String ward;
 
-    @Column(name = "District", length = 120)
+    @Column(name = "District", length = 120, columnDefinition = "NVARCHAR(120)")
     private String district;
 
-    @Column(name = "City", length = 120)
+    @Column(name = "City", length = 120, columnDefinition = "NVARCHAR(120)")
     private String city;
 
     @Column(name = "IsActive", nullable = false)
     private boolean isActive = true;
-
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ManagerId", unique = true)
+    private User manager;
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -161,6 +163,14 @@ public class Branch {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public User getManager() {
+        return manager;
+    }
+
+    public void setManager(User manager) {
+        this.manager = manager;
     }
 
     public Set<BranchProduct> getBranchProducts() {

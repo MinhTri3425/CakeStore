@@ -23,14 +23,14 @@ public class OrderCoupon {
     @JoinColumn(name = "CouponId")
     private Coupon coupon;
 
-    @Column(name = "CodeSnap", nullable = false, length = 50)
+    @Column(name = "CodeSnap", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
     private String codeSnap;
 
     @Column(name = "Value", nullable = false, precision = 12, scale = 2)
     private BigDecimal value;
 
     @Convert(converter = Type.Converter.class)
-    @Column(name = "Type", nullable = false, length = 20)
+    @Column(name = "Type", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Type type; // PERCENT / AMOUNT / SHIPPING_OFF
 
     public OrderCoupon() {

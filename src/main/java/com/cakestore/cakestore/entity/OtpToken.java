@@ -19,11 +19,11 @@ public class OtpToken {
     @JoinColumn(name = "UserId", nullable = false)
     private User user;
 
-    @Column(name = "Code", nullable = false, length = 10)
+    @Column(name = "Code", nullable = false, length = 10, columnDefinition = "NVARCHAR(10)")
     private String code;
 
     @Convert(converter = Purpose.Converter.class)
-    @Column(name = "Purpose", nullable = false, length = 20)
+    @Column(name = "Purpose", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Purpose purpose; // activate | reset
 
     @Column(name = "ExpiresAt", nullable = false)

@@ -17,24 +17,27 @@ public class User {
     @Column(name = "Id")
     private Long id;
 
-    @Column(name = "Email", nullable = false, length = 255, unique = true)
+    @Column(name = "Email", nullable = false, length = 255, unique = true, columnDefinition = "NVARCHAR(255)")
     private String email;
 
-    @Column(name = "Phone", length = 20)
+    @Column(name = "Phone", length = 20, columnDefinition = "NVARCHAR(20)")
     private String phone;
 
-    @Column(name = "PasswordHash", nullable = false, length = 255)
+    @Column(name = "PasswordHash", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String passwordHash;
 
-    @Column(name = "FullName", nullable = false, length = 120)
+    @Column(name = "FullName", nullable = false, length = 120, columnDefinition = "NVARCHAR(120)")
     private String fullName;
 
     /** customer/admin/shipper — ràng buộc bằng CHECK ở DB */
-    @Column(name = "Role", nullable = false, length = 20)
+    @Column(name = "Role", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private String role = "customer";
 
     @Column(name = "IsActive", nullable = false)
     private boolean isActive = true;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "BranchId")
+    private Branch branch;
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -113,6 +116,14 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public Branch getBranch() {
+        return branch;
+    }
+
+    public void setBranch(Branch branch) {
+        this.branch = branch;
     }
 
     public String getPasswordHash() {

@@ -1,0 +1,410 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/user/header :: layout(~{::body})">
+<body style="background:#0b1220;color:#e5e7eb;font-family:'Inter',sans-serif;">
+
+<style>
+  :root{
+    --bg:#0b1220;
+    --card:#111827;
+    --border:rgba(148,163,184,.25);
+    --muted:#94a3b8;
+    --text:#e5e7eb;
+    --primary:#22c55e;
+    --secondary:#60a5fa;
+  }
+
+  /* layout wrapper card */
+  .pd-card{
+    background:rgba(17,24,39,.75);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:0 18px 48px rgba(2,6,23,.45);
+    padding:18px;
+    max-width:1400px;
+    margin-inline:auto;
+  }
+
+  /* gallery container */
+  .pd-gallery{
+    background:
+      radial-gradient(120% 90% at 0% 0%, rgba(34,197,94,.18), transparent 40%),
+      radial-gradient(120% 90% at 100% 20%, rgba(96,165,250,.18), transparent 40%);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  /* main image */
+  .pd-main-img-wrapper{
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .pd-main-img{
+    width:100%;
+    height:420px;
+    object-fit:cover;
+    display:block;
+    background:#000;
+  }
+  @media (max-width:768px){
+    .pd-main-img{
+      height:260px;
+    }
+  }
+
+  /* thumbnail strip */
+  .pd-thumbs{
+    display:flex;
+    flex-wrap:nowrap;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(148,163,184,.4) transparent;
+  }
+  .pd-thumb{
+    width:64px;
+    height:64px;
+    flex:0 0 auto;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#0f172a;
+    object-fit:cover;
+    cursor:pointer;
+    transition:all .16s;
+    box-shadow:0 10px 22px rgba(0,0,0,.6);
+  }
+  .pd-thumb.active{
+    border-color:#60a5fa;
+    box-shadow:0 0 8px rgba(96,165,250,.6),0 20px 40px rgba(0,0,0,.8);
+  }
+  .pd-thumb:hover{
+    border-color:#60a5fa;
+    box-shadow:0 0 6px rgba(96,165,250,.4),0 16px 32px rgba(0,0,0,.6);
+  }
+
+  /* title & price */
+  h3{
+    font-weight:800;
+    margin-bottom:.35rem;
+    color:#d1fae5;
+  }
+  .pd-price{
+    font-size:1.6rem;
+    font-weight:900;
+    background:linear-gradient(135deg,#a7f3d0,#93c5fd);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    margin-bottom:.6rem;
+  }
+  .pd-short{
+    color:var(--muted);
+    margin-bottom:1rem;
+  }
+
+  /* controls row */
+  .pd-controls .form-control{
+    width:120px;
+    border-radius:12px;
+    background:rgba(15,23,42,.6);
+    border:1px solid var(--border);
+    color:#e5e7eb;
+  }
+  .pd-controls .form-control:focus{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 6px rgba(96,165,250,.25);
+    background:rgba(15,23,42,.85);
+  }
+
+  .btn-primary{
+    background:linear-gradient(135deg,var(--primary),var(--secondary));
+    border:none;
+    color:#07131f;
+    font-weight:800;
+    border-radius:12px;
+    box-shadow:0 6px 18px rgba(34,197,94,.25);
+    transition:transform .18s, filter .18s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:150px;
+    height:44px;
+    padding:0 16px;
+  }
+  .btn-primary:hover{
+    transform:translateY(-1px);
+    filter:saturate(1.05);
+  }
+  .btn-primary:active{
+    transform:scale(.97);
+    box-shadow:inset 0 2px 8px rgba(0,0,0,.35);
+  }
+
+  /* fav button (same style as home / category) */
+  .btn-like-wrapper{
+    width:44px;
+    height:44px;
+    display:flex;
+  }
+  .btn-like{
+    border-radius:12px;
+    width:44px;
+    height:44px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:600;
+    font-size:1rem;
+    line-height:1;
+    transition:all .18s;
+    box-shadow:0 10px 24px rgba(0,0,0,.6);
+  }
+  /* chưa yêu thích */
+  .btn-like.off{
+    border:2px solid rgba(239,68,68,.6);
+    background:rgba(239,68,68,.06);
+    color:#ff7777;
+  }
+  .btn-like.off:hover{
+    background:rgba(239,68,68,.16);
+    color:#fff;
+    box-shadow:0 0 8px rgba(239,68,68,.6),0 20px 40px rgba(0,0,0,.8);
+    transform:translateY(-1px);
+  }
+  /* đã yêu thích */
+  .btn-like.on{
+    border:2px solid rgba(239,68,68,1);
+    background:radial-gradient(circle at 30% 30%, rgba(239,68,68,.9), rgba(139,0,0,.9) 70%);
+    color:#fff;
+    box-shadow:0 0 8px rgba(239,68,68,.8),0 24px 40px rgba(0,0,0,.9);
+  }
+  .btn-like.on:hover{
+    filter:brightness(1.1);
+    transform:translateY(-1px);
+  }
+
+  /* variants */
+  .pd-variants h6,
+  .pd-desc h6{
+    color:#d1fae5;
+    font-weight:700;
+    margin:.8rem 0 .4rem;
+  }
+  .pd-variants ul{
+    margin:0;
+    padding:0;
+    list-style:none;
+    display:grid;
+    gap:.35rem;
+  }
+  .pd-variants li{
+    background:rgba(17,24,39,.55);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:.5rem .75rem;
+    color:#dbe5f0;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+  }
+  .pd-variants small{
+    color:var(--muted);
+  }
+
+  /* description */
+  .pd-desc{
+    color:#e5e7eb;
+  }
+  .pd-desc p{
+    color:#cfd8e3;
+  }
+  .pd-desc a{
+    color:#93c5fd;
+  }
+</style>
+
+<div class="pd-card">
+  <div class="row g-4">
+
+    <!-- Cột trái: gallery -->
+    <div class="col-md-5">
+      <div class="pd-gallery">
+
+        <!-- ảnh to -->
+        <div class="pd-main-img-wrapper">
+          <img
+            id="pdMainImg"
+            class="pd-main-img"
+            th:if="${#lists.size(p.images) > 0}"
+            th:src="${p.images[0]}"
+            alt=""
+          />
+          <img
+            id="pdMainImg"
+            class="pd-main-img"
+            th:unless="${#lists.size(p.images) > 0}"
+            src="/static/img/placeholder.png"
+            alt=""
+          />
+        </div>
+
+        <!-- thumbnails -->
+        <div class="pd-thumbs">
+          <img
+            th:each="img,iter:${p.images}"
+            th:src="${img}"
+            th:alt="'Ảnh ' + ${iter.index}+1"
+            class="pd-thumb"
+            th:classappend="${iter.index == 0} ? ' active' : ''"
+            th:attr="data-fullsrc=${img}"
+          />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Cột phải: info -->
+    <div class="col-md-7">
+      <h3 th:text="${p.name}">Tên bánh</h3>
+
+<div class="pd-price"
+     th:text="${#numbers.formatDecimal(p.price,1,0)} + ' đ'">
+  0 đ
+</div>
+
+<!-- tồn kho cho chi nhánh hiện tại -->
+<div style="font-size:.9rem; font-weight:600; line-height:1.4;">
+  <span style="color:#94a3b8;"
+        th:if="${branchStockAvailable != null and currentBranch != null}">
+    <span th:if="${branchStockAvailable > 0}"
+          th:text="'Số lượng: ' + ${branchStockAvailable}">
+      Số lượng: 10
+
+    </span>
+    <span th:if="${branchStockAvailable <= 0}"
+          style="color:#f87171;"
+          th:text="'Tạm hết hàng">
+      Tạm hết hàng
+    </span>
+  </span>
+
+  <!-- fallback nếu vì lý do gì chưa xác định được chi nhánh -->
+  <span style="color:#94a3b8;"
+        th:if="${branchStockAvailable == null}">
+    Kiểm tra tồn kho...
+  </span>
+</div>
+
+<p class="pd-short" th:text="${p.shortDesc}">
+  Mô tả ngắn
+</p>
+
+      <!-- controls (số lượng + thêm vào giỏ + tim) -->
+      <div class="pd-controls d-flex flex-wrap gap-2 mb-3">
+
+        <!-- form add cart -->
+        <form th:action="@{/cart/add}" method="post" class="d-flex flex-wrap flex-sm-nowrap gap-2">
+          <input type="hidden"
+                 th:if="${_csrf != null}"
+                 th:name="${_csrf.parameterName}"
+                 th:value="${_csrf.token}" />
+          <input type="hidden" name="productId" th:value="${p.id}"/>
+
+          <input type="number"
+                 min="1"
+                 name="qty"
+                 value="1"
+                 class="form-control"
+                 style="height:44px;">
+
+          <button class="btn btn-primary" type="submit">
+            Thêm vào giỏ
+          </button>
+        </form>
+
+        <!-- fav / like -->
+        <div class="btn-like-wrapper">
+          <!-- đã đăng nhập -->
+          <div th:if="${#authorization.expression('isAuthenticated()')}">
+            <form th:action="@{/fav/toggle}" method="post" class="m-0 p-0">
+              <input type="hidden" name="productId" th:value="${p.id}">
+              <input type="hidden"
+                     th:if="${_csrf!=null}"
+                     th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}">
+              <button type="submit"
+                      class="btn-like"
+                      th:classappend="${session.FAV_IDS != null and #lists.contains(session.FAV_IDS, p.id)} ? ' on' : ' off'"
+                      onclick="this.disabled=true;this.form.submit();">
+                ♥
+              </button>
+            </form>
+          </div>
+
+          <!-- chưa đăng nhập -->
+          <div th:unless="${#authorization.expression('isAuthenticated()')}">
+            <a href="/auth/login"
+               class="btn-like off"
+               title="Đăng nhập để yêu thích">♥</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- variants -->
+      <div class="pd-variants"
+           th:if="${p.variants != null and #lists.size(p.variants) > 0}">
+        <h6>Tuỳ chọn</h6>
+        <ul class="list-unstyled">
+          <li th:each="v : ${p.variants}">
+            <span th:text="${v.attrName + ': ' + v.attrValue}">Size: M</span>
+            <small th:if="${v.priceAdj != null}"
+                   th:text="'(+' + (#numbers.formatDecimal(v.priceAdj,1,0)) + ' đ)'">
+              (+0)
+            </small>
+          </li>
+        </ul>
+      </div>
+
+      <!-- description -->
+      <div class="pd-desc mt-3">
+        <h6>Mô tả</h6>
+        <div th:utext="${p.description}">
+          Mô tả dài
+        </div>
+      </div>
+
+    </div><!-- /col-md-7 -->
+  </div><!-- /row -->
+</div><!-- /pd-card -->
+
+<script>
+  // gallery logic: click thumbnail -> đổi ảnh to + active border
+  document.addEventListener('DOMContentLoaded', function () {
+    const mainImg = document.querySelector('.pd-main-img'); // main preview
+    const thumbs = document.querySelectorAll('.pd-thumb');
+
+    if (!mainImg || thumbs.length === 0) return;
+
+    thumbs.forEach(t => {
+      t.addEventListener('click', () => {
+        const full = t.getAttribute('data-fullsrc');
+        if (full) {
+          mainImg.setAttribute('src', full);
+        }
+
+        // active state border/glow
+        thumbs.forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

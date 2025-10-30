@@ -20,11 +20,11 @@ public class Coupon {
     @Column(name = "Id")
     private Long id;
 
-    @Column(name = "Code", nullable = false, length = 50, unique = true)
+    @Column(name = "Code", nullable = false, length = 50, unique = true, columnDefinition = "NVARCHAR(50)")
     private String code;
 
     @Convert(converter = Type.Converter.class)
-    @Column(name = "Type", nullable = false, length = 20)
+    @Column(name = "Type", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Type type; // PERCENT / AMOUNT / SHIPPING_OFF
 
     @Column(name = "Value", nullable = false, precision = 12, scale = 2)

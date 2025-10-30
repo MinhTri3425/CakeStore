@@ -19,10 +19,10 @@ public class Category {
     @Column(name = "Id")
     private Long id;
 
-    @Column(name = "Name", nullable = false, length = 150)
+    @Column(name = "Name", nullable = false, length = 150, columnDefinition = "NVARCHAR(150)")
     private String name;
 
-    @Column(name = "Slug", nullable = false, length = 150, unique = true)
+    @Column(name = "Slug", nullable = false, length = 150, unique = true, columnDefinition = "NVARCHAR(150)")
     private String slug;
 
     // Quan hệ tự tham chiếu: nhiều con -> 1 cha

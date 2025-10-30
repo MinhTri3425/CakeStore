@@ -18,15 +18,15 @@ public class Promotion {
     @Column(name = "Id")
     private Long id;
 
-    @Column(name = "Name", nullable = false, length = 150)
+    @Column(name = "Name", nullable = false, length = 150, columnDefinition = "NVARCHAR(150)")
     private String name;
 
     @Convert(converter = Scope.Converter.class)
-    @Column(name = "Scope", nullable = false, length = 20)
+    @Column(name = "Scope", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Scope scope; // APP / PRODUCT
 
     @Convert(converter = Type.Converter.class)
-    @Column(name = "Type", nullable = false, length = 20)
+    @Column(name = "Type", nullable = false, length = 20, columnDefinition = "NVARCHAR(20)")
     private Type type; // PERCENT / AMOUNT / SHIPPING_OFF
 
     @Column(name = "Value", nullable = false, precision = 12, scale = 2)

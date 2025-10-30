@@ -26,10 +26,10 @@ public class ShippingRate {
     @JoinColumn(name = "BranchId")
     private Branch branch;
 
-    @Column(name = "District", length = 120)
+    @Column(name = "District", length = 120, columnDefinition = "NVARCHAR(120)")
     private String district;
 
-    @Column(name = "City", length = 120)
+    @Column(name = "City", length = 120, columnDefinition = "NVARCHAR(120)")
     private String city;
 
     @Column(name = "BaseFee", nullable = false, precision = 12, scale = 2)

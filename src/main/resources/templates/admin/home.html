@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6" lang="en">
+<head>
+    <div th:replace="~{fragments/admin/header :: header-css}"></div>
+    <title>Admin Dashboard</title>
+</head>
+<body class="layout-fixed sidebar-expand-lg">
+<div class="app-wrapper"> 
+    
+    <div th:replace="~{fragments/admin/header :: header}"></div>
+
+    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark" th:fragment="sidebar">
+        <div class="sidebar-brand">
+            <a th:href="@{/admin/home}" class="brand-link">
+                <img th:src="@{/adminlte/assets/img/AdminLTELogo.png}" alt="AdminLTE Logo" class="brand-image opacity-75 shadow">
+                <span class="brand-text fw-light">CakeStore Admin</span>
+            </a>
+        </div>
+        
+        <div class="sidebar-wrapper">
+            <nav class="mt-2">
+                <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" data-accordion="false" id="admin-sidebar-menu">
+                    
+                    <li class="nav-item">
+                        <a th:href="@{/admin/home}" class="nav-link"
+                           sec:authorize="hasRole('ADMIN')">
+                            <i class="nav-icon bi bi-speedometer"></i> <p>Dashboard (Admin)</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/staff/home}" class="nav-link"
+                           sec:authorize="hasRole('STAFF')">
+                            <i class="nav-icon bi bi-speedometer2"></i> <p>Dashboard (Staff)</p>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-header">QUẢN LÝ</li>
+                    
+                    <li class="nav-item">
+                        <a th:href="@{/admin/products}" class="nav-link"
+                           sec:authorize="hasAnyRole('ADMIN', 'STAFF')">
+                            <i class="nav-icon bi bi-box-seam-fill"></i> <p>Quản lý Sản phẩm</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/admin/orders}" class="nav-link"
+                           sec:authorize="hasAnyRole('ADMIN', 'STAFF')">
+                            <i class="nav-icon bi bi-receipt"></i> <p>Quản lý Đơn hàng</p>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-header">ADMIN</li>
+                    <li class="nav-item">
+                        <a th:href="@{/admin/users}" class="nav-link"
+                           sec:authorize="hasRole('ADMIN')">
+                            <i class="nav-icon bi bi-people-fill"></i> <p>Quản lý User/Staff</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/admin/categories}" class="nav-link"
+                           sec:authorize="hasRole('ADMIN')">
+                            <i class="nav-icon bi bi-tags-fill"></i> <p>Quản lý Danh mục</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/admin/coupons}" class="nav-link"
+                           sec:authorize="hasRole('ADMIN')">
+                            <i class="nav-icon bi bi-scissors"></i> <p>Mã Giảm giá</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/admin/inventory}" class="nav-link"
+                           sec:authorize="hasRole('ADMIN')">
+                            <i class="nav-icon bi bi-archive-fill"></i> <p>Quản lý Nhập hàng</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/admin/branches}" class="nav-link"
+                           sec:authorize="hasRole('ADMIN')">
+                            <i class="nav-icon bi bi-shop"></i> <p>Quản lý Chi nhánh</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/admin/stats}" class="nav-link"
+                           sec:authorize="hasRole('ADMIN')">
+                            <i class="nav-icon bi bi-bar-chart-fill"></i> <p>Thống kê</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+    <main class="app-main">
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6"><h3 class="mb-0">Admin Dashboard</h3></div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-end">
+                            <li class="breadcrumb-item active" aria-current="page">Home</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-content">
+            <div class="container-fluid">
+                <p>Chào mừng Admin. Tại đây bạn có thể theo dõi tổng quan hệ
+                    thống.</p>
+                
+                <div class="row">
+                    <div class="col-lg-4 col-6">
+                        <div class="small-box text-bg-primary">
+                            <div class="inner">
+                                <h3 th:text="${#numbers.formatDecimal(todayRevenue, 0, 'POINT', 0, 'POINT')} + ' VND'">0 VND</h3>
+                                <p>Doanh thu Hôm nay</p>
+                            </div>
+                            <div class="icon"><i class="bi bi-cash-stack"></i></div>
+                            <a th:href="@{/admin/stats}" class="small-box-footer link-light">
+                                Xem chi tiết <i class="bi bi-link-45deg"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-6">
+                        <div class="small-box text-bg-warning">
+                            <div class="inner">
+                                <h3 th:text="${newOrders} + ' đơn'">0 đơn</h3>
+                                <p>Đơn hàng Mới</p>
+                            </div>
+                            <div class="icon"><i class="bi bi-bag-plus-fill"></i></div>
+                            <a th:href="@{/admin/orders(status='NEW')}" class="small-box-footer link-dark">
+                                Xem chi tiết <i class="bi bi-link-45deg"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-6">
+                        <div class="small-box text-bg-success">
+                            <div class="inner">
+                                <h3 th:text="${totalProducts} + ' SP'">0 sản phẩm</h3>
+                                <p>Tổng số Sản phẩm</p>
+                            </div>
+                            <div class="icon"><i class="bi bi-box-seam-fill"></i></div>
+                            <a th:href="@{/admin/products}" class="small-box-footer link-light">
+                                Xem chi tiết <i class="bi bi-link-45deg"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Thống kê Đơn hàng 7 ngày qua</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            <a th:href="@{/admin/stats}">Xem chi tiết Thống kê và Báo
+                                cáo.</a>
+                        </p>
+                    </div>
+                </div>
+                </div>
+        </div>
+    </main>
+    <div th:replace="~{fragments/admin/footer :: footer}"></div>
+    
+</div> <div th:replace="~{fragments/admin/footer :: footer-scripts}"></div>
+
+<script th:fragment="script-active-sidebar" th:inline="javascript">
+    /*<![CDATA[*/
+    // Script for active sidebar link (Cần cập nhật cho cấu trúc mới)
+    document.addEventListener("DOMContentLoaded", function() {
+        var currentPath = window.location.pathname;
+        var sidebarLinks = document.querySelectorAll('#admin-sidebar-menu .nav-link'); // Lấy link từ ID của menu
+
+        sidebarLinks.forEach(function(link) {
+            var linkPath = new URL(link.href).pathname;
+            
+            // Xử lý trang chủ
+            if (currentPath === '/admin/home' && linkPath.includes('/admin/home')) {
+                 link.classList.add('active');
+                 return; // Dừng lại để tránh khớp với /admin/home khác
+            }
+
+            // So sánh các trang khác, bỏ qua trang chủ
+            if (linkPath !== '/admin/home' && currentPath.startsWith(linkPath)) {
+                link.classList.add('active');
+                
+                // Mở menu cha nếu có
+                var parentTreeview = link.closest('.nav-item.menu-open'); // Giả sử menu-open là class cha
+                if(parentTreeview) {
+                     // Nếu AdminLTE tự động xử lý, dòng này có thể không cần
+                     parentTreeview.querySelector('.nav-link').classList.add('active');
+                }
+            }
+        });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

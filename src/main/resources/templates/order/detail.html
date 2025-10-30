@@ -1,0 +1,469 @@
+<!-- templates/order/detail.html -->
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/user/header :: layout(~{::body})">
+<body style="background:#0b1220;color:#e5e7eb;font-family:'Inter',sans-serif;">
+
+<style>
+  :root{
+    --bg:#0b1220;
+    --card:#111827;
+    --border:rgba(148,163,184,.25);
+    --muted:#94a3b8;
+    --text:#e5e7eb;
+    --accent-grad:linear-gradient(135deg,#22c55e,#60a5fa);
+  }
+
+  h4{
+    font-weight:800;
+    color:#d1fae5;
+    margin:1rem 0 1.5rem;
+    text-shadow:0 0 10px rgba(34,197,94,.15);
+  }
+
+  .section-card{
+    background:rgba(17,24,39,.55);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:0 16px 40px rgba(0,0,0,.6);
+    padding:16px 20px;
+    color:var(--text);
+    margin-bottom:1.5rem;
+  }
+
+  .header-row{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    gap:.5rem 1rem;
+  }
+
+  .header-left{
+    font-weight:700;
+    color:#fff;
+    font-size:1rem;
+  }
+  .header-sub{
+    color:#94a3b8;
+    font-size:.8rem;
+    font-weight:500;
+    line-height:1.4;
+  }
+
+  /* badge */
+  .status-badge{
+    display:inline-block;
+    font-size:.7rem;
+    line-height:1.2;
+    font-weight:600;
+    border-radius:999px;
+    padding:4px 8px;
+    border:1px solid transparent;
+  }
+  .badge-NEW        { background:rgba(96,165,250,.12);  color:#bfdbfe; border-color:rgba(96,165,250,.4); }
+  .badge-CONFIRMED  { background:rgba(16,185,129,.12);  color:#6ee7b7; border-color:rgba(16,185,129,.4); }
+  .badge-SHIPPING   { background:rgba(251,191,36,.12);  color:#fde68a; border-color:rgba(251,191,36,.4); }
+  .badge-DELIVERED  { background:rgba(34,197,94,.12);   color:#a7f3d0; border-color:rgba(34,197,94,.4); }
+  .badge-CANCELED   { background:rgba(239,68,68,.12);   color:#fecaca; border-color:rgba(239,68,68,.4); }
+  .badge-RETURNED   { background:rgba(244,114,182,.12); color:#fde2f5; border-color:rgba(244,114,182,.45); }
+
+  .status-block .row-line{
+    font-size:.85rem;
+    font-weight:500;
+    color:#fff;
+    margin-bottom:.5rem;
+  }
+  .status-label{
+    color:#94a3b8;
+    font-weight:500;
+    font-size:.75rem;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    display:block;
+    margin-bottom:.25rem;
+  }
+
+  .address-block .addr-line{
+    color:#fff;
+    font-size:.9rem;
+    font-weight:500;
+    line-height:1.4;
+  }
+  .addr-meta{
+    color:#94a3b8;
+    font-size:.8rem;
+    font-weight:500;
+    line-height:1.4;
+    margin-top:.5rem;
+  }
+
+  /* items table */
+  table.items-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:.9rem;
+    color:#fff;
+  }
+  table.items-table thead th{
+    background:rgba(15,23,42,.9);
+    color:#f1f5f9;
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:.7rem;
+    letter-spacing:.03em;
+    border-bottom:1px solid var(--border);
+    padding:10px 12px;
+  }
+  table.items-table tbody tr{
+    background:rgba(17,24,39,.6);
+    border-bottom:1px solid var(--border);
+    transition:.2s;
+  }
+  table.items-table tbody tr:hover{
+    background:rgba(96,165,250,.08);
+  }
+  table.items-table tbody td{
+    padding:12px;
+    vertical-align:middle;
+    color:#fff;
+    font-weight:500;
+  }
+
+  .money{
+    color:#a5f3fc;
+    font-weight:600;
+  }
+
+  .order-note-box{
+    background:rgba(59,130,246,.12);
+    border:1px solid rgba(96,165,250,.4);
+    border-radius:12px;
+    color:#dbeafe;
+    font-size:.8rem;
+    font-weight:500;
+    line-height:1.4;
+    padding:.75rem 1rem;
+    margin-top:1rem;
+  }
+
+  /* total summary */
+  .totals-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:.9rem;
+    font-weight:500;
+    color:#fff;
+    margin-bottom:.4rem;
+  }
+  .totals-label{
+    color:#94a3b8;
+    font-weight:500;
+  }
+  .totals-total{
+    font-size:1.1rem;
+    font-weight:700;
+    background:linear-gradient(135deg,#a7f3d0,#93c5fd);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .back-link{
+    font-size:.8rem;
+    color:#93c5fd;
+    text-decoration:none;
+    font-weight:600;
+  }
+  .back-link:hover{
+    color:#cde3ff;
+    text-decoration:underline;
+  }
+
+  /* nút hủy đơn */
+  .cancel-btn{
+    background:transparent;
+    border:1px solid rgba(239,68,68,.6);
+    color:#f87171;
+    font-size:.8rem;
+    font-weight:600;
+    padding:.5rem .75rem;
+    border-radius:8px;
+    cursor:pointer;
+    line-height:1.2;
+    box-shadow:0 0 10px rgba(239,68,68,.3);
+  }
+  .cancel-btn:hover{
+    background:rgba(239,68,68,.1);
+  }
+
+  /* nút thanh toán VNPay */
+  .pay-vnpay-btn{
+    background:var(--accent-grad);
+    border:0;
+    border-radius:10px;
+    font-size:.8rem;
+    font-weight:700;
+    line-height:1.2;
+    color:#0b1220;
+    padding:.6rem .9rem;
+    cursor:pointer;
+    box-shadow:
+      0 10px 24px rgba(34,197,94,.3),
+      0 0 16px rgba(96,165,250,.4);
+    display:inline-block;
+  }
+  .pay-vnpay-btn:hover{
+    filter:saturate(1.05);
+  }
+</style>
+
+<div class="container" style="max-width:1100px;padding:16px 16px 60px;">
+
+  <!-- HEADER: mã đơn + thời gian -->
+  <div class="header-row">
+    <div class="header-left">
+      Đơn hàng #<span th:text="${order.id}">123</span>
+    </div>
+    <div class="header-sub">
+      <span th:if="${order.createdAt != null}">
+        Tạo lúc
+        <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">
+          29/10/2025 12:34
+        </span>
+      </span>
+      <span th:if="${order.createdAt == null}">
+        Thời gian tạo: --:--
+      </span>
+    </div>
+  </div>
+
+  <!-- STATUS + PAYMENT + BRANCH + (HỦY / THANH TOÁN) -->
+  <div class="section-card status-block">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="status-label">TRẠNG THÁI ĐƠN</div>
+        <div class="row-line">
+          <span class="status-badge"
+                th:text="${order.status}"
+                th:classappend="' badge-' + ${order.status}">
+            NEW
+          </span>
+        </div>
+
+        <div class="status-label">THANH TOÁN</div>
+        <div class="row-line">
+          <div>
+            <b style="color:#fff;"
+               th:text="${order.paymentStatus}">UNPAID</b>
+            <span style="color:#94a3b8;font-size:.8rem;font-weight:500;">
+              (<span th:text="${order.paymentMethod != null ? order.paymentMethod : 'N/A'}">COD</span>)
+            </span>
+          </div>
+        </div>
+
+        <!-- NÚT HỦY ĐƠN: chỉ render nếu NEW & UNPAID -->
+        <div style="margin-top:1rem;"
+             th:if="${
+               order.status == T(com.cakestore.cakestore.entity.Order.OrderStatus).NEW
+               and order.paymentStatus == T(com.cakestore.cakestore.entity.Order.PaymentStatus).UNPAID
+             }">
+
+          <form th:action="@{'/orders/' + ${order.id} + '/cancel'}"
+                method="post"
+                onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn này?');"
+                style="margin:0;display:inline-block;">
+            <input type="hidden" th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit" class="cancel-btn">
+              Hủy đơn
+            </button>
+          </form>
+        </div>
+
+        <!-- NÚT THANH TOÁN VNPAY:
+             render nếu đơn vẫn NEW,
+             chưa thanh toán (UNPAID),
+             và phương thức là VNPAY -->
+        <div style="margin-top:1rem;"
+             th:if="${
+               order.status == T(com.cakestore.cakestore.entity.Order.OrderStatus).NEW
+               and order.paymentStatus == T(com.cakestore.cakestore.entity.Order.PaymentStatus).UNPAID
+               and order.paymentMethod == T(com.cakestore.cakestore.entity.Order.PaymentMethod).VNPAY
+             }">
+          <form th:action="@{'/orders/' + ${order.id} + '/pay-vnpay'}"
+                method="post"
+                style="margin:0;display:inline-block;">
+            <input type="hidden" th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit" class="pay-vnpay-btn">
+              Thanh toán VNPay
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <div class="col-md-4">
+        <div class="status-label">CHI NHÁNH XỬ LÝ</div>
+        <div class="row-line" style="line-height:1.4;">
+          <div th:text="${order.branch != null ? order.branch.name : '---'}">CakeStore Q1</div>
+          <div style="color:#94a3b8;font-size:.8rem;font-weight:500;"
+               th:if="${order.branch != null && order.branch.city != null}"
+               th:text="${order.branch.city}">
+            TP.HCM
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="status-label">GHI CHÚ KHÁCH</div>
+        <div class="row-line"
+             th:if="${order.note != null and !#strings.isEmpty(order.note)}"
+             th:text="${order.note}">
+          Ít ngọt nha
+        </div>
+        <div class="row-line"
+             th:if="${order.note == null or #strings.isEmpty(order.note)}"
+             style="color:#94a3b8;">
+          (Không có ghi chú)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHIPPING ADDRESS -->
+  <div class="section-card address-block">
+    <div class="status-label">THÔNG TIN GIAO HÀNG</div>
+
+    <!-- Tên người nhận -->
+    <div class="addr-line"
+         th:text="${#strings.isEmpty(order.shippingFullName) ? '---' : order.shippingFullName}">
+      Nguyễn Thị Kem
+    </div>
+
+    <!-- SĐT -->
+    <div class="addr-line">
+      <span th:text="${#strings.isEmpty(order.shippingPhone) ? '---' : order.shippingPhone}">
+        0909xxxxxx
+      </span>
+    </div>
+
+    <!-- Địa chỉ đầy đủ -->
+    <div class="addr-line" style="margin-top:.4rem;">
+      <span th:if="${!#strings.isEmpty(order.shippingLine1)
+                   or !#strings.isEmpty(order.shippingWard)
+                   or !#strings.isEmpty(order.shippingDistrict)
+                   or !#strings.isEmpty(order.shippingCity)}">
+
+        <span th:text="${order.shippingLine1}">123 Lê Lợi</span>
+        <span th:if="${!#strings.isEmpty(order.shippingWard)}">,
+          <span th:text="${order.shippingWard}">Phường 4</span>
+        </span>
+        <span th:if="${!#strings.isEmpty(order.shippingDistrict)}">,
+          <span th:text="${order.shippingDistrict}">Quận 3</span>
+        </span>
+        <span th:if="${!#strings.isEmpty(order.shippingCity)}">,
+          <span th:text="${order.shippingCity}">TP.HCM</span>
+        </span>
+
+      </span>
+
+      <span th:if="${#strings.isEmpty(order.shippingLine1)
+                   and #strings.isEmpty(order.shippingWard)
+                   and #strings.isEmpty(order.shippingDistrict)
+                   and #strings.isEmpty(order.shippingCity)}"
+            style="color:#94a3b8;">
+        (Không có địa chỉ)
+      </span>
+    </div>
+
+    <div class="addr-meta"
+         th:if="${!#strings.isEmpty(order.shippingFullName)
+                or !#strings.isEmpty(order.shippingPhone)
+                or !#strings.isEmpty(order.shippingLine1)
+                or !#strings.isEmpty(order.shippingWard)
+                or !#strings.isEmpty(order.shippingDistrict)
+                or !#strings.isEmpty(order.shippingCity)}">
+      Địa chỉ đã chốt lúc đặt hàng (không bị thay đổi sau này).
+    </div>
+  </div>
+
+  <!-- ITEMS -->
+  <div class="section-card">
+    <div class="status-label">SẢN PHẨM</div>
+
+    <div class="table-responsive mt-2">
+      <table class="items-table">
+        <thead>
+        <tr>
+          <th>Sản phẩm</th>
+          <th style="width:80px;">SL</th>
+          <th style="width:140px;">Đơn giá</th>
+          <th style="width:140px;">Thành tiền</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="it : ${order.items}">
+          <td th:text="${it.nameSnapshot}">Bánh Kem Dâu - Size L</td>
+          <td th:text="${it.quantity}">1</td>
+          <td class="money"
+              th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' đ'">
+            120.000 đ
+          </td>
+          <td class="money"
+              th:text="${#numbers.formatDecimal(it.lineTotal,0,'COMMA',0,'POINT')} + ' đ'">
+            120.000 đ
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="section-card">
+    <div class="status-label">TỔNG THANH TOÁN</div>
+
+    <div class="totals-row">
+      <span class="totals-label">Tạm tính</span>
+      <span class="money"
+            th:text="${#numbers.formatDecimal(order.subtotal,0,'COMMA',0,'POINT')} + ' đ'">
+        200.000 đ
+      </span>
+    </div>
+
+    <div class="totals-row">
+      <span class="totals-label">Giảm giá</span>
+      <span class="money"
+            th:text="${#numbers.formatDecimal(order.discount,0,'COMMA',0,'POINT')} + ' đ'">
+        0 đ
+      </span>
+    </div>
+
+    <div class="totals-row">
+      <span class="totals-label">Phí giao</span>
+      <span class="money"
+            th:text="${#numbers.formatDecimal(order.shippingFee,0,'COMMA',0,'POINT')} + ' đ'">
+        15.000 đ
+      </span>
+    </div>
+
+    <div class="totals-row" style="margin-top:.5rem;">
+      <span class="totals-label">Tổng cộng</span>
+      <span class="totals-total"
+            th:text="${#numbers.formatDecimal(order.total,0,'COMMA',0,'POINT')} + ' đ'">
+        215.000 đ
+      </span>
+    </div>
+
+    <div class="text-end mt-3">
+      <a th:href="@{/orders}" class="back-link">⬅ Quay về danh sách</a>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

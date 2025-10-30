@@ -38,7 +38,7 @@ public class OrderItem {
     private BigDecimal unitPrice;
 
     // snapshot tên tại thời điểm mua (tránh lệ thuộc thay đổi sau này)
-    @Column(name = "NameSnapshot", nullable = false, length = 150)
+    @Column(name = "NameSnapshot", nullable = false, length = 150, columnDefinition = "NVARCHAR(150)")
     private String nameSnapshot;
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)

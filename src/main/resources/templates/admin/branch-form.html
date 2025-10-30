@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <div th:replace="~{fragments/admin/header :: header-css}"></div>
+    <title th:text="${isEdit ? 'Chỉnh sửa Chi nhánh' : 'Thêm Chi nhánh Mới'}"></title>
+</head>
+<body class="layout-fixed sidebar-expand-lg">
+<div class="app-wrapper"> 
+
+    <div th:replace="~{fragments/admin/header :: header}"></div>
+    
+    <div th:replace="~{admin/home :: sidebar}"></div>
+
+    <main class="app-main">
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6"><h3 class="mb-0" th:text="${isEdit ? 'Chỉnh sửa Chi nhánh' : 'Thêm Chi nhánh Mới'}"></h3></div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-end">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/home}">Home</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/admin/branches}">Chi nhánh</a></li>
+                            <li class="breadcrumb-item active" aria-current="page" th:text="${isEdit ? 'Chỉnh sửa' : 'Tạo mới'}"></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-10">
+                       <div class="card card-dark">
+                            <div class="card-header">
+                                <h3 class="card-title" th:text="${isEdit ? 'Thông tin: ' + branch.name : 'Thêm Chi nhánh Mới'}"></h3>
+                            </div>
+                            
+                            <form th:action="@{/admin/branches}" th:object="${branch}" method="post">
+                                <div class="card-body">
+                                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                                    
+                                    <input type="hidden" th:field="*{id}" th:if="${isEdit}" />
+
+                                    <div class="row">
+                                        <div class="mb-3 col-md-6">
+                                            <label for="code" class="form-label">Mã Code (Ví dụ: HCM-Q1)</label>
+                                            <input type="text" th:field="*{code}" class="form-control" id="code" 
+                                                   th:readonly="${isEdit}" required>
+                                        </div>
+                                        <div class="mb-3 col-md-6">
+                                            <label for="name" class="form-label">Tên Chi nhánh</label>
+                                            <input type="text" th:field="*{name}" class="form-control" id="name" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="mb-3 col-md-6">
+                                            <label for="managerId" class="form-label">Quản lý (Manager)</label>
+                                            <select name="managerId" id="managerId" class="form-select">
+                                                <option value="">-- Không gán Quản lý --</option>
+                                                <option th:each="mgr : ${managers}"
+                                                        th:value="${mgr.id}"
+                                                        th:text="${mgr.fullName + ' (' + mgr.email + ')'}"
+                                                        th:selected="${branch.manager != null && branch.manager.id == mgr.id}">
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3 col-md-6">
+                                            <label for="phone" class="form-label">Số điện thoại</label>
+                                            <input type="tel" th:field="*{phone}" class="form-control" id="phone">
+                                        </div>
+                                    </div>
+
+                                    <h5 class="mt-4">Địa chỉ</h5>
+
+                                    <div class="row">
+                                        <div class="mb-3 col-md-6">
+                                            <label for="city" class="form-label">Thành phố</label>
+                                            <input type="text" th:field="*{city}" class="form-control" id="city" required>
+                                        </div>
+                                        <div class="mb-3 col-md-6">
+                                            <label for="district" class="form-label">Quận/Huyện</label>
+                                            <input type="text" th:field="*{district}" class="form-control" id="district">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="mb-3 col-md-6">
+                                            <label for="ward" class="form-label">Phường/Xã</label>
+                                            <input type="text" th:field="*{ward}" class="form-control" id="ward">
+                                        </div>
+                                        <div class="mb-3 col-md-6">
+                                            <label for="line1" class="form-label">Số nhà, Tên đường</label>
+                                            <input type="text" th:field="*{line1}" class="form-control" id="line1" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" th:field="*{active}" class="form-check-input" id="isActive">
+                                        <label class="form-check-label" for="isActive">Hoạt động (Is Active)</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary" th:text="${isEdit ? 'Cập nhật Chi nhánh' : 'Thêm Chi nhánh'}"></button>
+                                    <a th:href="@{/admin/branches}" class="btn btn-secondary">Hủy</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/admin/footer :: footer}"></div>
+    
+</div> <div th:replace="~{fragments/admin/footer :: footer-scripts}"></div>
+<script th:replace="~{admin/home :: script-active-sidebar}"></script>
+
+</body>
+</html>
